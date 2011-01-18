@@ -5,39 +5,27 @@
 # by Vasily Zakharov (vmzakhar@gmail.com)
 # http://code.google.com/p/spelltrainer/
 #
-# Version 0.5.1
+# Uses TkInter for GUI: http://wiki.python.org/moin/TkInter
+#
+# Version 0.2
 #
 
 # ToDo:
-# - Include Hogwarts hooligan spells
 # - Allow adjusting colors and fonts
-# - Include support for fast series?
 # - Make frequency of appearance depend on level
 # - Make delay depend on level
+# - Include Hogwarts hooligan spells
+# - Include support for fast series?
 
 from getopt import getopt
-from platform import system
 from random import choice, seed
 from sys import argv, exit # exit redefined # pylint: disable=W0622
+from thread import start_new_thread
 from time import sleep
 
-if system() == 'Windows':
-    from msvcrt import kbhit				# pylint: disable=F0401
-elif system() == 'Linux':
-    from fcntl import fcntl, F_SETFL	 		# pylint: disable=F0401
-    from os import O_NDELAY, O_NONBLOCK	 		# pylint: disable=F0401
-    from sys import stdin
-    fcntl(stdin, F_SETFL, O_NDELAY | O_NONBLOCK)
-    def kbhit():
-        try:
-            stdin.read(1)
-            return True
-        except IOError:
-            return False
-else:
-    raise Exception("Unsupported platform: %s" % system())
+from Tkinter import Button, Frame, StringVar, CENTER, FLAT, N, S, E, W
 
-TITLE = "\nSpellTrainer v0.1"
+TITLE = "SpellTrainer v0.2"
 
 SPELLS = ("Impedimenta", "Tarantallegra", "Silencio",			# Protego
           "Rictusempra", "Incarcero", "Mento Menores",			# Defendo
@@ -50,15 +38,25 @@ MAXIMA = tuple(s + " Maxima" for s in SPELLS) + ("Petrificus Totalus",)
 
 ULTIMA = tuple(s + " Ultima" for s in SPELLS)
 
-class SpellTrainer:
+class SpellTrainer(Frame): # pylint: disable=R0904
 
-    delay = 3
+    delay = 1
 
     MODE_ATTACK = 0
     MODE_DEFENCE = 1
 
-    def __init__(self):
-        try: # Reading command line options
+    FONT_NAME = 'Verdana'
+    FONT_SIZE = 10
+    FONT_STYLE = 'bold'
+
+    ATTACK_BACKGROUND  = '#000000'
+    ATTACK_FOREGROUND  = '#00ff00'
+    DEFENCE_BACKGROUND = '#ff0000'
+    DEFENCE_FOREGROUND = '#ffffff'
+
+    def __init__(self, master = None):
+        # Reading command line options
+        try:
             (options, args) = getopt(argv[1:], 'd:h', ('delay=', 'help'))
             for (option, value) in options:
                 if option in ('-d', '--delay'):
@@ -70,11 +68,9 @@ class SpellTrainer:
                     usage()
         except Exception, e:
             usage("%s" % e)
-        if not args:
-            usage("At least one of s/m/u and one of a/d commands must be specified")
-        if len(args) > 1:
-            usage("Too many arguments")
-        commands = args[0]
+
+        # Processing command line commands
+        commands = ''.join(args)
         spells = []
         if 's' in commands:
             spells += SIMPLA
@@ -92,28 +88,46 @@ class SpellTrainer:
         self.spells = tuple(spells)
         self.modes = tuple(modes)
 
+        # Initializing GUI
+        Frame.__init__(self, master)
+        self.master.title(TITLE)
+        self.grid(sticky = N+S+E+W)
+        top = self.winfo_toplevel()
+        top.rowconfigure(0, weight = 1)
+        top.columnconfigure(0, weight = 1)
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
+        self.text = StringVar()
+        self.text.set(TITLE)
+        self.button = Button(self, textvariable = self.text, command = self.quit,
+                             anchor = CENTER, justify = CENTER, relief = FLAT, borderwidth = 0,
+                             font = (self.FONT_NAME, self.FONT_SIZE, self.FONT_STYLE))
+        self.button.grid(row = 0, column = 0, sticky = N+S+E+W)
+        start_new_thread(self.run, ()) # Start activity thread
+        self.mainloop()
+
     def run(self):
-        print TITLE
+        '''Activity method that performs the actual action.
+           Must be run in a separate thread.'''
         seed()
-        while not kbhit():
+        while True:
+            sleep(self.delay)
             spell = choice(self.spells)
             mode = choice(self.modes)
             if mode == self.MODE_ATTACK:
-                text = '      DO'
+                self.button.configure(background = self.ATTACK_BACKGROUND, foreground = self.ATTACK_FOREGROUND)
             elif mode == self.MODE_DEFENCE:
-                text = 'INCOMING'
+                self.button.configure(background = self.DEFENCE_BACKGROUND, foreground = self.DEFENCE_FOREGROUND)
             else:
                 assert False # this should never happen
-            print "\n%s %s" % (text, spell)
-            sleep(self.delay)
-        print "Done"
+            self.text.set(spell)
 
 def usage(error = None):
     '''Prints usage information (preceded by optional error message) and exits with code 2.'''
-    print "%s\n" % TITLE
+    print "\n%s\n" % TITLE
     if error:
         print "Error: %s\n" % error
-    print "Usage: python SpellTrainer.py [-d|--delay <seconds>] [smuad]"
+    print "Usage: python SpellTrainer.py [options] <commands>"
     print "\nCommands:"
     print "\t s  Include Simpla spells"
     print "\t m  Include Maxima spells"
@@ -121,12 +135,13 @@ def usage(error = None):
     print "\t a  Train attacks (cast spells shown to you in green)"
     print "\t d  Train defence (cast shields against the spells cast at you on red)"
     print "\nOptions:"
-    print "\t-d --delay <seconds>   Delay between spells (default is 3 seconds)"
+    print "\t-d --delay <seconds>   Delay between spells (default is 1 second)"
     print "\t-h --help              Show this help message"
     exit(2)
 
 def main():
-    SpellTrainer().run()
+    '''Starts the SpellTrainer GUI.'''
+    SpellTrainer()
 
 if __name__ == '__main__':
     main()
