@@ -7,7 +7,7 @@
 #
 # Uses TkInter for GUI: http://wiki.python.org/moin/TkInter
 #
-# Version 0.2
+# Version 0.21
 #
 
 # ToDo:
@@ -17,26 +17,29 @@
 # - Include Hogwarts hooligan spells
 # - Include support for fast series?
 
+from base64 import b64decode
 from getopt import getopt
+from os import remove
 from random import choice, seed
 from sys import argv, exit # exit redefined # pylint: disable=W0622
+from tempfile import NamedTemporaryFile
 from thread import start_new_thread
 from time import sleep
 
 from Tkinter import Button, Frame, StringVar, CENTER, FLAT, N, S, E, W
 
-TITLE = "SpellTrainer v0.2"
+TITLE = 'SpellTrainer v0.21'
 
-SPELLS = ("Impedimenta", "Tarantallegra", "Silencio",			# Protego
-          "Rictusempra", "Incarcero", "Mento Menores",			# Defendo
-          "Stupefy", "Achelitus", "Maledicero",				# Enervate
-          "Incendio", "Deluvium", "Tormencio", "Conjunctivitus")	# VIP
+SPELLS = ('Impedimenta', 'Tarantallegra', 'Silencio',			# Protego
+          'Rictusempra', 'Incarcero', 'Mento Menores',			# Defendo
+          'Stupefy', 'Achelitus', 'Maledicero',				# Enervate
+          'Incendio', 'Deluvium', 'Tormencio', 'Conjunctivitus')	# VIP
 
-SIMPLA = SPELLS + ("Expelliarmus",)
+SIMPLA = SPELLS + ('Expelliarmus',)
 
-MAXIMA = tuple(s + " Maxima" for s in SPELLS) + ("Petrificus Totalus",)
+MAXIMA = tuple(s + ' Maxima' for s in SPELLS) + ('Petrificus Totalus',)
 
-ULTIMA = tuple(s + " Ultima" for s in SPELLS)
+ULTIMA = tuple(s + ' Ultima' for s in SPELLS)
 
 class SpellTrainer(Frame): # pylint: disable=R0904
 
@@ -91,6 +94,14 @@ class SpellTrainer(Frame): # pylint: disable=R0904
         # Initializing GUI
         Frame.__init__(self, master)
         self.master.title(TITLE)
+        try:
+            icoFile = NamedTemporaryFile(delete = False)
+            icoFile.write(b64decode('AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAAAABMLAAATCwAAEAAAAAAAAAA3RkwA6OblAACw9wCLjY0AxszMAK+urQAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZmZmZmZmZmZnd3d3d3d3dmd3d3d3d3d2Z3d3d3d3dQZnd0EDF3d2dmdAQCB3dwN2ZwdxAFd0Z3ZlF3dXd3Z3dmV3d3d3A3d2Yxd3d3Rnd3ZkB3d3dnd3dmdjd3cFd3d2Z3YAAEd3d3Znd3EXd3d3dmd3d3d3d3d2ZmZmZmZmZmYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'))
+            icoFile.close()
+            self.master.wm_iconbitmap(icoFile.name)
+            remove(icoFile.name)
+        except Exception:
+            pass
         self.grid(sticky = N+S+E+W)
         top = self.winfo_toplevel()
         top.rowconfigure(0, weight = 1)
