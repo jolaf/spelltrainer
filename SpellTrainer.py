@@ -25,10 +25,12 @@ from sys import argv, exit # exit redefined # pylint: disable=W0622
 from tempfile import NamedTemporaryFile
 from thread import start_new_thread
 from time import sleep
+from traceback import format_exc
 
-from Tkinter import Button, Frame, StringVar, CENTER, FLAT, N, S, E, W
+from Tkinter import Button, Frame, Label, StringVar, CENTER, FLAT, N, S, E, W
+from tkFont import Font
 
-TITLE = 'SpellTrainer v0.21'
+TITLE = 'SpellTrainer v0.22'
 
 SPELLS = ('Impedimenta', 'Tarantallegra', 'Silencio',			# Protego
           'Rictusempra', 'Incarcero', 'Mento Menores',			# Defendo
@@ -52,10 +54,10 @@ class SpellTrainer(Frame): # pylint: disable=R0904
     FONT_SIZE = 10
     FONT_STYLE = 'bold'
 
-    ATTACK_BACKGROUND  = '#000000'
-    ATTACK_FOREGROUND  = '#00ff00'
-    DEFENCE_BACKGROUND = '#ff0000'
-    DEFENCE_FOREGROUND = '#ffffff'
+    ATTACK_BACKGROUND  = 'black'
+    ATTACK_FOREGROUND  = 'green'
+    DEFENCE_BACKGROUND = 'red'
+    DEFENCE_FOREGROUND = 'white'
 
     def __init__(self, master = None):
         # Reading command line options
@@ -98,7 +100,7 @@ class SpellTrainer(Frame): # pylint: disable=R0904
             icoFile = NamedTemporaryFile(delete = False)
             icoFile.write(b64decode('AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAAAABMLAAATCwAAEAAAAAAAAAA3RkwA6OblAACw9wCLjY0AxszMAK+urQAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZmZmZmZmZmZnd3d3d3d3dmd3d3d3d3d2Z3d3d3d3dQZnd0EDF3d2dmdAQCB3dwN2ZwdxAFd0Z3ZlF3dXd3Z3dmV3d3d3A3d2Yxd3d3Rnd3ZkB3d3dnd3dmdjd3cFd3d2Z3YAAEd3d3Znd3EXd3d3dmd3d3d3d3d2ZmZmZmZmZmYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'))
             icoFile.close()
-            self.master.wm_iconbitmap(icoFile.name)
+            self.master.wm_iconbitmap(default = icoFile.name)
             remove(icoFile.name)
         except Exception:
             pass
@@ -114,24 +116,41 @@ class SpellTrainer(Frame): # pylint: disable=R0904
                              anchor = CENTER, justify = CENTER, relief = FLAT, borderwidth = 0,
                              font = (self.FONT_NAME, self.FONT_SIZE, self.FONT_STYLE))
         self.button.grid(row = 0, column = 0, sticky = N+S+E+W)
+        self.master.wm_geometry('235x100')
+        self.master.bind('<Configure>', self.resize)
         start_new_thread(self.run, ()) # Start activity thread
         self.mainloop()
+
+    def resize(self, event = None):
+        if event and (event.width < 10 or event.height < 10):
+            return # Skip initial resize event to avoid dead loop
+        # ToDo: find the longest spell name and adjust the font size for it instead of current spell
+        # ToDo: create Label statically
+        # ToDo: maybe calculate font proportion once and store THAT statically
+        t = Label(self, font = (self.FONT_NAME, -1000, self.FONT_STYLE), height = 1, text = self.text.get())
+        height = int(float(self.winfo_width()) / t.winfo_reqwidth() * t.winfo_reqheight())
+        self.button.configure(font = Font(family = self.FONT_NAME, size = -int(0.7 * min(self.winfo_height(), height)), weight = self.FONT_STYLE))
 
     def run(self):
         '''Activity method that performs the actual action.
            Must be run in a separate thread.'''
         seed()
         while True:
-            sleep(self.delay)
-            spell = choice(self.spells)
-            mode = choice(self.modes)
-            if mode == self.MODE_ATTACK:
-                self.button.configure(background = self.ATTACK_BACKGROUND, foreground = self.ATTACK_FOREGROUND)
-            elif mode == self.MODE_DEFENCE:
-                self.button.configure(background = self.DEFENCE_BACKGROUND, foreground = self.DEFENCE_FOREGROUND)
-            else:
-                assert False # this should never happen
-            self.text.set(spell)
+            try:
+                sleep(self.delay)
+                spell = choice(self.spells)
+                mode = choice(self.modes)
+                if mode == self.MODE_ATTACK:
+                    # ToDo: set click background color also, create special method for that
+                    self.button.configure(background = self.ATTACK_BACKGROUND, foreground = self.ATTACK_FOREGROUND)
+                elif mode == self.MODE_DEFENCE:
+                    self.button.configure(background = self.DEFENCE_BACKGROUND, foreground = self.DEFENCE_FOREGROUND)
+                else:
+                    assert False # this should never happen
+                self.text.set(spell)
+                self.resize()
+            except Exception:
+                print format_exc()
 
 def usage(error = None):
     '''Prints usage information (preceded by optional error message) and exits with code 2.'''
