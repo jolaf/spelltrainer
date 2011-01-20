@@ -7,7 +7,7 @@
 #
 # Uses TkInter for GUI: http://wiki.python.org/moin/TkInter
 #
-# Version 0.21
+# Version 0.23
 #
 
 # ToDo:
@@ -27,7 +27,7 @@ from thread import start_new_thread
 from time import sleep
 from traceback import format_exc
 
-from Tkinter import Button, Frame, Label, StringVar, CENTER, FLAT, N, S, E, W
+from Tkinter import Frame, Label, StringVar, CENTER, FLAT, N, S, E, W
 from tkFont import Font
 
 TITLE = 'SpellTrainer v0.22'
@@ -42,6 +42,8 @@ SIMPLA = SPELLS + ('Expelliarmus',)
 MAXIMA = tuple(s + ' Maxima' for s in SPELLS) + ('Petrificus Totalus',)
 
 ULTIMA = tuple(s + ' Ultima' for s in SPELLS)
+
+ALLOW_REPEAT_ATTACK_AFTER = 2
 
 class SpellTrainer(Frame): # pylint: disable=R0904
 
@@ -60,6 +62,8 @@ class SpellTrainer(Frame): # pylint: disable=R0904
     DEFENCE_FOREGROUND = 'white'
 
     def __init__(self, master = None):
+        '''Parses command line parameters, initializes the GUI and starts the main loop.'''
+
         # Reading command line options
         try:
             (options, args) = getopt(argv[1:], 'd:h', ('delay=', 'help'))
@@ -96,61 +100,69 @@ class SpellTrainer(Frame): # pylint: disable=R0904
         # Initializing GUI
         Frame.__init__(self, master)
         self.master.title(TITLE)
-        try:
+        self.master.wm_geometry('235x100')
+        self.master.columnconfigure(0, weight = 1)
+        self.master.rowconfigure(0, weight = 1)
+        try: # Setting window icon
             icoFile = NamedTemporaryFile(delete = False)
             icoFile.write(b64decode('AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAAAABMLAAATCwAAEAAAAAAAAAA3RkwA6OblAACw9wCLjY0AxszMAK+urQAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZmZmZmZmZmZnd3d3d3d3dmd3d3d3d3d2Z3d3d3d3dQZnd0EDF3d2dmdAQCB3dwN2ZwdxAFd0Z3ZlF3dXd3Z3dmV3d3d3A3d2Yxd3d3Rnd3ZkB3d3dnd3dmdjd3cFd3d2Z3YAAEd3d3Znd3EXd3d3dmd3d3d3d3d2ZmZmZmZmZmYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'))
             icoFile.close()
             self.master.wm_iconbitmap(default = icoFile.name)
             remove(icoFile.name)
-        except Exception:
-            pass
+        except:
+            pass # If we can't install icon for some reason, ok with that
         self.grid(sticky = N+S+E+W)
-        top = self.winfo_toplevel()
-        top.rowconfigure(0, weight = 1)
-        top.columnconfigure(0, weight = 1)
         self.rowconfigure(0, weight = 1)
         self.columnconfigure(0, weight = 1)
         self.text = StringVar()
         self.text.set(TITLE)
-        self.button = Button(self, textvariable = self.text, command = self.quit,
-                             anchor = CENTER, justify = CENTER, relief = FLAT, borderwidth = 0,
-                             font = (self.FONT_NAME, self.FONT_SIZE, self.FONT_STYLE))
-        self.button.grid(row = 0, column = 0, sticky = N+S+E+W)
-        self.master.wm_geometry('235x100')
+        self.label = Label(self, textvariable = self.text,
+                           anchor = CENTER, justify = CENTER, relief = FLAT, borderwidth = 0,
+                           font = (self.FONT_NAME, self.FONT_SIZE, self.FONT_STYLE))
+        self.label.grid(row = 0, column = 0, sticky = N+S+E+W)
         self.master.bind('<Configure>', self.resize)
+        self.master.bind('<Key-Escape>', self.quit)
         start_new_thread(self.run, ()) # Start activity thread
         self.mainloop()
 
-    def resize(self, event = None):
-        if event and (event.width < 10 or event.height < 10):
-            return # Skip initial resize event to avoid dead loop
+    def resize(self, event = None): # event is unused # pylint: disable=W0613
+        '''Called when window size or contents changes.'''
         # ToDo: find the longest spell name and adjust the font size for it instead of current spell
         # ToDo: create Label statically
         # ToDo: maybe calculate font proportion once and store THAT statically
         t = Label(self, font = (self.FONT_NAME, -1000, self.FONT_STYLE), height = 1, text = self.text.get())
-        height = int(float(self.winfo_width()) / t.winfo_reqwidth() * t.winfo_reqheight())
-        self.button.configure(font = Font(family = self.FONT_NAME, size = -int(0.7 * min(self.winfo_height(), height)), weight = self.FONT_STYLE))
+        height = int(float(self.winfo_width()) * t.winfo_reqheight() / t.winfo_reqwidth())
+        self.label.configure(font = Font(family = self.FONT_NAME, size = -int(min(0.5 * self.winfo_height(), 0.78 * height)), weight = self.FONT_STYLE))
+
+    def quit(self, event = None): # event is unused # pylint: disable=W0221, W0613
+        '''Overrides standard method to allow using as event handler.'''
+        Frame.quit(self)
 
     def run(self):
         '''Activity method that performs the actual action.
            Must be run in a separate thread.'''
         seed()
+        previousSpells = []
         while True:
             try:
                 sleep(self.delay)
-                spell = choice(self.spells)
                 mode = choice(self.modes)
+                spell = choice(self.spells)
                 if mode == self.MODE_ATTACK:
-                    # ToDo: set click background color also, create special method for that
-                    self.button.configure(background = self.ATTACK_BACKGROUND, foreground = self.ATTACK_FOREGROUND)
+                    while spell in previousSpells:
+                        spell = choice(self.spells)
+                    # Improve to count any level of a spell in
+                    previousSpells = (previousSpells + [spell])[-ALLOW_REPEAT_ATTACK_AFTER:]
+                    self.label.configure(background = self.ATTACK_BACKGROUND, foreground = self.ATTACK_FOREGROUND)
                 elif mode == self.MODE_DEFENCE:
-                    self.button.configure(background = self.DEFENCE_BACKGROUND, foreground = self.DEFENCE_FOREGROUND)
+                    self.label.configure(background = self.DEFENCE_BACKGROUND, foreground = self.DEFENCE_FOREGROUND)
                 else:
                     assert False # this should never happen
                 self.text.set(spell)
                 self.resize()
-            except Exception:
+            except:
                 print format_exc()
+                #pass # Sometimes exceptions fall out of Tkinter, just ignore them
 
 def usage(error = None):
     '''Prints usage information (preceded by optional error message) and exits with code 2.'''
