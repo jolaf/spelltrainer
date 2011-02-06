@@ -1,8 +1,8 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>SpellTrainer v0.1</title>
-<meta http-equiv="Content-Type" content="Text/HTML; CharSet=Windows-1251">
+<title>SpellTrainer v0.2</title>
+<meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
 <style type="text/css">
@@ -33,10 +33,22 @@ a {
 
 td#header {
 	background-color: gray;
+	height: 32px;
+}
+
+img#logo {
+	background-color: white;
 }
 
 h1.title {
 	font-size: 100%;
+	font-weight: bold;
+	margin: 0;
+	padding: 0;
+}
+
+p.title {
+	font-size: 80%;
 	font-weight: bold;
 	margin: 0;
 	padding: 0;
@@ -54,18 +66,16 @@ div#debug {
 	height: 10ex;
 	overflow: auto;
 }
-
-.hidden {
-	display: none;
-}
 </style>
 
 <script type="text/javascript">
+// ToDo: IE warns about this code, how to avoid it?
 debugCounter = 1;
 function debug(message) {
     // ToDo: print current date/time instead of counter
-    element = document.getElementById('debug');
-    element.innerHTML = debugCounter++ + ': ' + message + '<br>' + element.innerHTML;
+    // ToDo: this doesn't work properly on IE, fix
+    var debug = document.getElementById('debug');
+    debug.innerHTML = debugCounter++ + ': ' + message + '<br>' + debug.innerHTML;
 };
 
 var SPELLS = ['Impedimenta', 'Tarantallegra', 'Silencio',		// Protego
@@ -98,7 +108,7 @@ var FONT_STYLE = 'bold';
 var ATTACK_FOREGROUND  = 'green';
 var ATTACK_BACKGROUND  = 'black';
 var DEFENCE_FOREGROUND = 'white';
-var DEFENCE_BACKGROUND = 'red';
+var DEFENCE_BACKGROUND = '#800000';
 var FLASH_FOREGROUND = 'white';
 var FLASH_BACKGROUND = 'white';
 
@@ -110,15 +120,26 @@ var useMaxima = true;
 var useUltima = true;
 
 var trainAttack = true;
-var trainDefence = false;
+var trainDefence = true;
 
-var spells;
+var aspect = 0;
 
 function updateSpellList() {
-    spells = (useSimpla ? SIMPLA : []).concat(useMaxima ? MAXIMA : []).concat(useUltima ? ULTIMA : []);
+    var spells = (useSimpla ? SIMPLA : []).concat(useMaxima ? MAXIMA : []).concat(useUltima ? ULTIMA : []);
+    attackSpells.spells = defenceSpells.spells = spells;
+    // ToDo: this would only work at startup, instead create test site ourselves here
+    var test = document.getElementById('test');
+    aspect = 0;
+    for (var i = 0, spell; spell = spells[i]; i++) {
+        test.innerHTML = spell;
+        a = test.offsetWidth/test.offsetHeight;
+        aspect = Math.max(aspect, a);
+    }
+    aspect *= 1.5;
+    resize();
 }
 
-function SpellGenerator(spells, nSpells) {
+function SpellGenerator(nSpells, spells) {
     this.spells = spells;
     this.nSpells = nSpells;
     this.previousSpells = [];
@@ -126,70 +147,78 @@ function SpellGenerator(spells, nSpells) {
         newSpell:
         while (true) {
             spell = this.spells[Math.floor(Math.random() * this.spells.length)];
-            baseSpell = spell.slice(0, spell.indexOf(' '));
-            for (var previousSpell in this.previousSpells) {
+            baseIndex = spell.indexOf(' ');
+            baseSpell = baseIndex >= 0 ? spell.slice(0, baseIndex) : spell;
+            for (var i = 0, previousSpell; previousSpell = this.previousSpells[i]; i++) {
                 if (previousSpell === baseSpell) {
                     continue newSpell;
                 }
             }
-            this.previousSpells = (this.previousSpells + [baseSpell]).slice(-(this.nSpells - 1));
+            this.previousSpells = (this.previousSpells.concat([baseSpell])).slice(-(this.nSpells - 1));
             return spell;
         }
     }
 }
 
-updateSpellList();
-var  attackSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
-var defenceSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
+var attackSpells = new SpellGenerator(RULE_OF_N_SPELLS);
+var defenceSpells = new SpellGenerator(RULE_OF_N_SPELLS);
 
 function spellOff() {
-    debug('spellOff');
-    label = document.getElementById('spell');
-    label.style.color = FLASH_FOREGROUND;
-    label.style.backgroundColor = FLASH_BACKGROUND;
+    var spell = document.getElementById('spell');
+    spell.style.color = FLASH_FOREGROUND;
+    spell.style.backgroundColor = FLASH_BACKGROUND;
     timeout = setTimeout('spellOn()', flashDelay);
 }
 
 function spellOn() {
-    debug('spellOn');
-    label = document.getElementById('spell');
+    var spell = document.getElementById('spell');
     if (trainAttack && (!trainDefence || Math.random() >= 0.5)) {
-        label.innerHTML = attackSpells.next();
-        label.style.color = ATTACK_FOREGROUND;
-        label.style.backgroundColor = ATTACK_BACKGROUND;
-        debug('Attack: ' + label.innerHTML);
+        spell.innerHTML = attackSpells.next();
+        spell.style.color = ATTACK_FOREGROUND;
+        spell.style.backgroundColor = ATTACK_BACKGROUND;
+        debug('Attack: ' + spell.innerHTML);
     } else {
-        label.innerHTML = attackSpells.next();
-        label.style.color = DEFENCE_FOREGROUND;
-        label.style.backgroundColor = DEFENCE_BACKGROUND;
-        debug('Defence: ' + label.innerHTML);
+        spell.innerHTML = defenceSpells.next();
+        spell.style.color = DEFENCE_FOREGROUND;
+        spell.style.backgroundColor = DEFENCE_BACKGROUND;
+        debug('Defence: ' + spell.innerHTML);
     }
     timeout = setTimeout('spellOff()', spellDelay);
+}
+
+function resize() {
+    var spell = document.getElementById('spell');
+    spell.style.fontSize = Math.floor(spell.offsetWidth/aspect) + 'px';
+}
+
+function start() {
+    updateSpellList();
+    spellOff();
 }
 </script>
 </head>
 
-<body onload="spellOff()">
+<body onload="start()" onresize="resize()"> <!-- ToDo: remove onresize somehow -->
   <table class="wide high" cellspacing="0" cellpadding="0">
     <tr>
       <td id="header">
-        <table class="wide" cellspacing="0" cellpadding="0">
+        <table cellspacing="0" cellpadding="0">
           <tr>
+            <td><img id="logo" alt="" src="wand.png"></td>
             <td class="small">
-              <h1 class="title">SpellTrainer v0.1</h1>
-              <p class="small">[<a href="http://code.google.com/p/spelltrainer/">Project</a>]&nbsp;[<a href="http://spelltrainer.googlecode.com/svn/trunk/spelltrainer.html">HTML</a>]&nbsp;[<a href="http://spelltrainer.googlecode.com/svn/trunk/SpellTrainer.py">Python</a>]</p>
+              <h1 class="title">SpellTrainer v0.2</h1>
+              <p class="title">[<a href="http://code.google.com/p/spelltrainer/">Project</a>]&nbsp;[<a href="http://spelltrainer.googlecode.com/svn/trunk/spelltrainer.html">HTML</a>]&nbsp;[<a href="http://spelltrainer.googlecode.com/svn/trunk/SpellTrainer.py">Python</a>]</p>
             </td>
           </tr>
         </table>
       </td>
     </tr>
     <tr class="high">
-      <td id="spell">SpellTrainer v0.1</td>
+      <td id="spell"><table><tr><td id="test"></td></tr></table></td>
     </tr>
     <tr>
       <td><div id="debug"></div></td>
     </tr>
   </table>
-  <table class="hidden"><tr><td>SpellTrainer v0.1</td></tr></table>
 </body>
 </html>
