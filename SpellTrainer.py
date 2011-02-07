@@ -7,7 +7,7 @@
 #
 # Uses TkInter for GUI: http://wiki.python.org/moin/TkInter
 #
-# Version 1.01
+# Version 1.02
 #
 
 # ToDo:
@@ -29,18 +29,16 @@ from time import sleep
 
 from Tkinter import Frame, Label, StringVar, N, S, E, W
 
-TITLE = 'SpellTrainer v1.0'
+TITLE = 'SpellTrainer v1.02'
 
-SPELLS = ('Impedimenta', 'Tarantallegra', 'Silencio',		# Protego
+SIMPLA = ('Impedimenta', 'Tarantallegra', 'Silencio',		# Protego
           'Rictusempra', 'Incarcero', 'Mento Menores',		# Defendo
           'Stupefy', 'Achelitus', 'Maledicero',			# Enervate
           'Incendio', 'Deluvium', 'Tormencio', 'Conjunctivitus')# VIP
 
-SIMPLA = SPELLS + ('Expelliarmus',)
+MAXIMA = tuple(s + ' Maxima' for s in SIMPLA) + ('Petrificus Totalus', 'Expelliarmus')
 
-MAXIMA = tuple(s + ' Maxima' for s in SPELLS) + ('Petrificus Totalus',)
-
-ULTIMA = tuple(s + ' Ultima' for s in SPELLS)
+ULTIMA = tuple(s + ' Ultima' for s in SIMPLA)
 
 RULE_OF_N_SPELLS = 3
 
