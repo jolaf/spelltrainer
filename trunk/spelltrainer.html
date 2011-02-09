@@ -9,31 +9,7 @@
 html, body {
 	margin: 0;
 	padding: 0;
-}
-
-.wide {
-	width: 100%;
-}
-
-.high {
-	height: 100%;
-}
-
-.fill {
-	width: 100%;
-	height: 100%;
-}
-
-.small {
-	font-size: 80%;
-}
-
-.center {
-	text-align: center;
-}
-
-.strong {
-	font-weight: bold;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
 .welcome {
@@ -44,19 +20,16 @@ html, body {
 .ready {
 	color: white;
 	background-color: black;
-	font-weight: bold;
 }
 
 .attack {
 	color: green;
 	background-color: black;
-	font-weight: bold;
 }
 
 .defence {
 	color: white;
 	background-color: #800000;
-	font-weight: bold;
 }
 
 .flash {
@@ -64,17 +37,13 @@ html, body {
 	background-color: white;
 }
 
-.pad {
-	padding: 5px;
+.important {
+	font-weight: bold;
 }
 
-body, p, td, th, div {
-	font-family: Verdana, Arial, Helvetica, sans-serif;
-}
-
-td#header, td#footer {
-	background-color: gray;
-	height: 38px;
+.example {
+	font-weight: bold;
+	padding: 3px;
 }
 
 img.logo {
@@ -82,50 +51,52 @@ img.logo {
 	border: 0;
 }
 
-td#instructions {
+#header, #footer {
+        color: black;
+	background-color: gray;
+	height: 38px;
+}
+
+#noscript, #main {
+	width: 100%;
+	height: 100%;
+}
+
+#main {
+	display: none;
+}
+
+#info, #welcome {
 	text-align: center;
 }
 
-a.title {
+#noscriptTitle, #headerTitle, #welcomeTitle {
 	text-decoration: none;
 	font-weight: bold;
 	color: black;
 }
 
-td#cast {
-	height: 100%;
+#cast {
 	text-align: center;
 	vertical-align: middle;
+	font-weight: bold;
+	display: none;
 }
 
-div#debug {
+#start {
+	font-size: 300%;
+	font-weight: bold;
+	cursor: pointer;
+	margin: 0.2em 0 0.3em 0;
+}
+
+#logger {
 	height: 38px;
 	font-size: 50%;
 	overflow: auto;
 }
-
-td#banners {
-	vertical-align: bottom;
-}
-
-img.valid {
-	width: 88px;
-	height: 31px;
-	border: 0;
-}
-
-.hidden {
-	display: none;
-}
 </style>
-
 <script type="text/javascript">
-function debug(message) {
-    var debug = document.getElementById('debug');
-    debug.innerHTML += new Date().toLocaleTimeString() + '&nbsp;&nbsp;' + message + '<br>';
-    debug.scrollTop = debug.scrollHeight; // ToDo: this doesn't work well on IE
-}
-
 var SIMPLA = ['Impedimenta', 'Tarantallegra', 'Silencio',		// Protego
               'Rictusempra', 'Incarcero', 'Mento Menores',		// Defendo
               'Stupefy', 'Achelitus', 'Maledicero',			// Enervate
@@ -158,12 +129,13 @@ var useUltima = true;
 var trainAttack = true;
 var trainDefence = true;
 
-var aspect = 0;
+function debug(message) {
+    logger.innerHTML += new Date().toLocaleTimeString() + '&nbsp;&nbsp;' + message + '<br>';
+    logger.scrollTop = logger.scrollHeight; // ToDo: this doesn't work well on IE
+}
 
-var timeout;
-
-function SpellGenerator(nSpells) {
-    this.spells = [];
+function SpellGenerator(spells, nSpells) {
+    this.spells = spells;
     this.nSpells = nSpells;
     this.previousSpells = [];
     this.next = function() {
@@ -183,143 +155,126 @@ function SpellGenerator(nSpells) {
     }
 }
 
-var attackSpells = new SpellGenerator(RULE_OF_N_SPELLS);
-var defenceSpells = new SpellGenerator(RULE_OF_N_SPELLS);
+function castSpell() {
+    if (trainAttack && (!trainDefence || Math.random() >= 0.5)) {
+        cast.innerHTML = attackSpells.next();
+        body.className = 'attack';
+        debug('Attack: ' + cast.innerHTML);
+    } else {
+        cast.innerHTML = defenceSpells.next();
+        body.className = 'defence';
+        debug('Defence: ' + cast.innerHTML);
+    }
+    timeout = setTimeout('hideSpell()', spellDelay);
+}
 
-function updateSpellList() {
-    debug('updateSpellList');
+function hideSpell() {
+    body.className = 'flash';
+    timeout = setTimeout('castSpell()', flashDelay);
+}
+
+function resize() {
+    debug('resize');
+    var save = cast.innerHTML;
+    cast.innerHTML = null;
+    cast.style.fontSize = Math.floor(Math.min(cast.offsetHeight * 0.7, cast.offsetWidth * aspect)) + 'px';
+    cast.innerHTML = save;
+}
+
+function start() {
+    debug('start');
     var spells = (useSimpla ? SIMPLA : []).concat(useMaxima ? MAXIMA : []).concat(useUltima ? ULTIMA : []);
-    attackSpells.spells = defenceSpells.spells = spells;
-    var cast = document.getElementById('cast');
-    cast.innerHTML = '<table><tr><td id="test"><\/td><\/tr><\/table>';
+    attackSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
+    defenceSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
+    body.className = 'flash';
+    cast.innerHTML = '<span id="test"><\/span>';
     var test = document.getElementById('test');
-    var a = 1000;
-    for (var i = 0; i < spells.length; i++) {
+    welcome.style.display = 'none';
+    cast.style.display = 'table-cell';
+    for (var i = 0, a = 1000; i < spells.length; i++) {
         test.innerHTML = spells[i];
         a = Math.min(a, test.offsetHeight / test.offsetWidth);
     }
     cast.innerHTML = null;
     aspect = a * 0.7;
     resize();
-}
-
-function resize() {
-    debug('resize');
-    var cast = document.getElementById('cast');
-    if (cast.className != 'welcome') {
-      var save = cast.innerHTML;
-      cast.innerHTML = null;
-      cast.style.fontSize = Math.floor(Math.min(cast.offsetHeight * 0.7, cast.offsetWidth * aspect)) + 'px';
-      cast.innerHTML = save;
-    }
-}
-
-function nextSpell() {
-    var cast = document.getElementById('cast');
-    if (trainAttack && (!trainDefence || Math.random() >= 0.5)) {
-        cast.innerHTML = attackSpells.next();
-        cast.className = 'attack';
-        debug('Attack: ' + cast.innerHTML);
-    } else {
-        cast.innerHTML = defenceSpells.next();
-        cast.className = 'defence';
-        debug('Defence: ' + cast.innerHTML);
-    }
-}
-
-function hideSpell() {
-    document.getElementById('cast').className = 'flash';
-}
-
-function cast() {
-    nextSpell();
-    timeout = setTimeout('hide()', spellDelay);
-}
-
-function hide() {
-    hideSpell();
-    timeout = setTimeout('cast()', flashDelay);
-}
-
-function start() {
-    debug('start');
-    var cast = document.getElementById('cast');
+    body.onresize = onresize = resize;
     cast.innerHTML = 'Get ready!';
-    cast.className = 'ready';
-    resize();
-    timeout = setTimeout('cast()', spellDelay);
-    button = document.getElementById('start');
-    button.onclick = stop;
-    button.innerHTML = 'Stop';
+    body.className = 'ready';
+    timeout = setTimeout('castSpell()', spellDelay);
 }
 
 function stop() {
     debug('stop');
     clearTimeout(timeout);
-    var cast = document.getElementById('cast');
-    cast.className = 'welcome';
-    cast.style.fontSize = null;
-    cast.innerHTML = document.getElementById('instructions').innerHTML;
-    button = document.getElementById('start');
-    button.onclick = start;
-    button.innerHTML = 'Start';
+    body.className = 'welcome';
+    cast.style.display = 'none';
+    welcome.style.display = 'table-cell';
+    body.onresize = onresize = null;
 }
 
 function main() {
+    logger = document.getElementById('logger');
     debug('main');
-    updateSpellList();
-    var title = document.getElementById('instructionsTitle').innerHTML;
-    document.getElementById('headerTitle').innerHTML = title;
-    document.getElementsByTagName('title')[0].innerHTML = title;
-    stop();
-    document.getElementById('welcome').style.display = 'none';
+    document.getElementById('noscript').style.display = 'none';
     document.getElementById('main').style.display = 'table';
-    document.getElementsByTagName('body')[0].onresize = onresize = resize;
+    body = document.getElementsByTagName('body')[0];
+    cast = document.getElementById('cast');
+    welcome = document.getElementById('welcome');
+    var title = document.getElementById('noscriptTitle').innerHTML;
+    document.getElementsByTagName('title')[0].innerHTML = title;
+    document.getElementById('headerTitle').innerHTML = title;
+    document.getElementById('welcomeTitle').innerHTML = title;
+    body.className = 'welcome';
 }
 </script>
 </head>
 
 <body onload="main()">
-  <table id="welcome" class="fill" cellspacing="0" cellpadding="0">
+  <table id="noscript" cellspacing="0" cellpadding="0">
     <tr>
-      <td id="instructions">
-        <h1><a id="instructionsTitle" class="title" href="http://code.google.com/p/spelltrainer/">SpellTrainer v0.31</a></h1>
+      <td id="info">
+        <h1><a id="noscriptTitle" href="http://code.google.com/p/spelltrainer/">SpellTrainer v0.4</a></h1>
         <a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a><br>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
-        <p>Adjust the settings at the top bar as neccessary and press <strong>Start</strong>.</p>
-        <p>When you see a spell written in <span class="attack pad"><strong>attack colors</strong></span>, cast it at your imaginary opponent.</p>
-        <p>When you see a spell written in <span class="defence pad"><strong>defence colors</strong></span>, it means that spell is cast by your opponent at you, so cast the respective shield.</p>
-        <p>Start with a lower tempo (bigger delay), and then lower the delay as your casting speed improves.</p>
-        <noscript><p class="strong">This application requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.<br>Please enable JavaScript in your browser and reload the page.</p></noscript>
-        <p class="strong">Good luck!</p>
+        <br>
+        <p class="important">This page requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.</p>
+        <p class="important">Please enable JavaScript in your browser and reload the page.</p>
       </td>
     </tr>
   </table>
-  <table id="main" class="fill" cellspacing="0" cellpadding="0">
+  <table id="main" cellspacing="0" cellpadding="0">
     <tr>
       <td id="header">
         <table cellspacing="0" cellpadding="0">
           <tr>
             <td><a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a></td>
-            <td><a id="headerTitle" class="title" href="http://code.google.com/p/spelltrainer/"></a></td>
-            <td><button id="start" type="button"></button></td>
+            <td><a id="headerTitle" href="http://code.google.com/p/spelltrainer/"></a></td>
           </tr>
         </table>
       </td>
     </tr>
     <tr>
-      <td id="cast"></td>
+      <td id="welcome">
+        <h1><a id="welcomeTitle" href="http://code.google.com/p/spelltrainer/"></a></h1>
+        <a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a><br>
+        <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
+        <p>Adjust the settings at the top bar as neccessary and press</p>
+        <p><button id="start" type="button" onclick="start()">Start!</button></p>
+        <p class="important">Click anywhere in the spell window to stop and return to this screen.</p>
+        <p>When you see a spell written in <span class="example attack">attack colors</span> &ndash; cast it at your imaginary opponent.</p>
+        <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell is cast by your opponent at you, so cast the respective shield.</p>
+        <p>Start with a lower tempo (bigger delay), and then lower the delay as your casting speed improves.</p>
+        <p class="important">Good luck!</p>
+      </td>
+      <td id="cast" onclick="stop()"></td>
     </tr>
     <tr>
       <td id="footer">
-        <table class="fill" cellspacing="0" cellpadding="0">
-          <tr>
-            <td class="wide"><div id="debug"></div></td>
-            <td id="banners"><a href="http://validator.w3.org/check?uri=referer" title="Valid HTML 4.01 Transitional"><img class="valid" src="http://www.w3.org/Icons/valid-html401-blue.png" alt="Valid HTML 4.01 Transitional"></a>&nbsp;<a href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS 2.1"><img class="valid" src="http://jigsaw.w3.org/css-validator/images/vcss-blue" alt="Valid CSS 2.1"></a></td>
-          </tr>
-        </table>
+        <div id="logger"></div>
       </td>
     </tr>
   </table>
+  <script type="text/javascript">main()</script>
 </body>
 </html>
