@@ -51,13 +51,25 @@ p {
 	padding: 3px;
 }
 
+table.visible {
+	display: table;
+}
+
+td.visible {
+	display: table-cell;
+}
+
+.invisible {
+	display: none;
+}
+
 img.logo {
 	background-color: white;
 	border: 0;
 }
 
 #headerBlock, #footerBlock {
-        color: black;
+	color: black;
 	background-color: gray;
 	height: 38px;
 }
@@ -67,15 +79,12 @@ img.logo {
 	height: 100%;
 }
 
-#mainBlock {
-	display: none;
-}
-
 #infoBlock, #welcomeBlock {
 	text-align: center;
 }
 
 #headerTitle {
+	color: black;
 	font-weight: bold;
 }
 
@@ -88,7 +97,6 @@ img.logo {
 	text-align: center;
 	vertical-align: middle;
 	font-weight: bold;
-	display: none;
 }
 
 #startButton {
@@ -107,6 +115,10 @@ img.logo {
 </style>
 <!--[if IE]>
 <style type="text/css">
+table.visible, td.visible {
+	display: block;
+}
+
 #startButton {
 	padding: 0;
 }
@@ -204,17 +216,16 @@ function start() {
     body.className = 'flash';
     cast.innerHTML = '<span id="test"><\/span>';
     var test = document.getElementById('test');
-    welcome.style.display = 'none';
-    cast.style.display = (navigator.appName === 'Microsoft Internet Explorer') ? 'block' : 'table-cell';
+    welcome.className = 'invisible';
+    cast.className = 'visible';
     for (var i = 0, a = 1000; i < spells.length; i++) {
         test.innerHTML = spells[i];
         a = Math.min(a, test.offsetHeight / test.offsetWidth);
     }
-    cast.innerHTML = null;
     aspect = a * 0.7;
+    cast.innerHTML = 'Get ready!';
     resize();
     body.onresize = onresize = resize;
-    cast.innerHTML = 'Get ready!';
     body.className = 'ready';
     timeout = setTimeout('castSpell()', spellDelay);
 }
@@ -222,17 +233,18 @@ function start() {
 function stop() {
     debug('stop');
     clearTimeout(timeout);
+    body.className = 'flash';
+    cast.className = 'invisible';
+    welcome.className = 'visible';
     body.className = 'welcome';
-    cast.style.display = 'none';
-    welcome.style.display = (navigator.appName === 'Microsoft Internet Explorer') ? 'block' : 'table-cell';
     body.onresize = onresize = null;
 }
 
 function main() {
     logger = document.getElementById('loggerBlock');
     debug('main');
-    document.getElementById('noscriptBlock').style.display = 'none';
-    document.getElementById('mainBlock').style.display = (navigator.appName === 'Microsoft Internet Explorer') ? 'block' : 'table';
+    document.getElementById('noscriptBlock').className = 'invisible';
+    document.getElementById('mainBlock').className = 'visible';
     body = document.getElementsByTagName('body')[0];
     cast = document.getElementById('castBlock');
     welcome = document.getElementById('welcomeBlock');
@@ -246,10 +258,10 @@ function main() {
 </head>
 
 <body>
-  <table id="noscriptBlock" cellspacing="0" cellpadding="0">
+  <table id="noscriptBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.42</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.43</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -261,7 +273,7 @@ function main() {
       </td>
     </tr>
   </table>
-  <table id="mainBlock" cellspacing="0" cellpadding="0">
+  <table id="mainBlock" class="invisible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="headerBlock">
         <table cellspacing="0" cellpadding="0">
@@ -273,7 +285,7 @@ function main() {
       </td>
     </tr>
     <tr>
-      <td id="welcomeBlock">
+      <td id="welcomeBlock" class="visible">
         <h1 id="welcomeTitle"></h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
@@ -287,7 +299,7 @@ function main() {
         <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
         <p class="important">Good luck!</p>
       </td>
-      <td id="castBlock" onclick="stop()"></td>
+      <td id="castBlock" class="invisible" onclick="stop()"></td>
     </tr>
     <tr>
       <td id="footerBlock">
