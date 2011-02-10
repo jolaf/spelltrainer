@@ -34,7 +34,7 @@ p {
 
 .defence {
 	color: white;
-	background-color: #800000;
+	background-color: maroon;
 }
 
 .flash {
@@ -250,38 +250,40 @@ function setFont() {
     body.className = savedClass;
 }
 
-function getStyle(selector, style) {
-    var rules = new Array();
-    if (document.styleSheets[0].cssRules) {
-        rules = document.styleSheets[0].cssRules;
-    } else if (document.styleSheets[0].rules) {
+function getStyle(selector) {
+    var rules = document.styleSheets[0].cssRules;
+    if (!rules) {
         rules = document.styleSheets[0].rules;
     }
-    for (n in rules) {
-        if (rules[n].selectorText === selector) {
-            return rules[n].style;
+    for (var i = 0; rule = rules[i]; i++) {
+        if (rule.selectorText === selector) {
+            return rule.style;
         }
+    }
+}
+
+function doSetColors(selector, field, display, control, defaultValue) {
+    try {
+        getStyle(selector)[field] = display.style.backgroundColor = control.value;
+    } catch(err) {
+        getStyle(selector)[field] = display.style.backgroundColor = defaultValue;
     }
 }
 
 function setColors() {
     debug('setColors');
-    //defenceForegroundControl.value;
-    defenceForegroundDisplay.style.backgroundColor = defenceForegroundControl.value;
-    //defenceBackgroundControl.value;
-    defenceBackgroundDisplay.style.backgroundColor = defenceBackgroundControl.value;
-    //attackForegroundControl.value;
-    attackForegroundDisplay.style.backgroundColor = attackForegroundControl.value;
-    //attackBackgroundControl.value;
-    attackBackgroundDisplay.style.backgroundColor = attackBackgroundControl.value;
+    doSetColors('.attack', 'color', attackForegroundDisplay, attackForegroundControl, 'gray');
+    doSetColors('.attack', 'backgroundColor', attackBackgroundDisplay, attackBackgroundControl, 'white');
+    doSetColors('.defence', 'color', defenceForegroundDisplay, defenceForegroundControl, 'gray');
+    doSetColors('.defence', 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
 }
 
 function reset() {
     debug('reset');
-    defenceForegroundControl.value = 'green';
-    defenceBackgroundControl.value = 'black';
-    attackForegroundControl.value = 'white';
-    attackBackgroundControl.value = 'maroon';
+    attackForegroundControl.value = 'green';
+    attackBackgroundControl.value = 'black';
+    defenceForegroundControl.value = 'white';
+    defenceBackgroundControl.value = 'maroon';
     setColors();
     fontFamilyControl.value = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
     fontWeightControl.checked = 'on';
@@ -347,7 +349,7 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.51</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.52</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -374,13 +376,13 @@ function main() {
                 <tr>
                   <td class="menu prefix">Font:</td>
                   <td class="menu"><input id="fontFamilyControlID" class="menu input" type="text" onchange="setFont()"></td>
-                  <td class="menu prefix">Defence:</td>
+                  <td class="menu prefix">Attack:</td>
                   <td class="menu">
-                    <input id="defenceForegroundControlID" class="menu input" type="text" onchange="setColors()">
-                    <span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="attackForegroundControlID" class="menu input" type="text" onchange="setColors()">
+                    <span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
                     on
-                    <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                    <input id="defenceBackgroundControlID" class="menu input" type="text" onchange="setColors()">
+                    <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="attackBackgroundControlID" class="menu input" type="text" onchange="setColors()">
                   </td>
                 </tr>
                 <tr>
@@ -389,13 +391,13 @@ function main() {
                     <input id="fontWeightControlID" class="input" type="checkbox" onchange="setFont()">bold
                     <input id="fontStyleControlID" class="input" type="checkbox" onchange="setFont()">italic
                   </td>
-                  <td class="menu prefix">Attack:</td>
+                  <td class="menu prefix">Defence:</td>
                   <td class="menu">
-                    <input id="attackForegroundControlID" class="menu input" type="text" onchange="setColors()">
-                    <span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="defenceForegroundControlID" class="menu input" type="text" onchange="setColors()">
+                    <span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
                     on
-                    <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                    <input id="attackBackgroundControlID" class="menu input" type="text" onchange="setColors()">
+                    <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="defenceBackgroundControlID" class="menu input" type="text" onchange="setColors()">
                   </td>
                 </tr>
               </table>
