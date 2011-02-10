@@ -93,7 +93,7 @@ img.logo {
 	height: 38px;
 }
 
-#noscriptBlock, #mainBlock {
+#loadingBlock, #mainBlock {
 	width: 100%;
 	height: 100%;
 }
@@ -317,7 +317,7 @@ function stop() {
 function main() {
     logger = document.getElementById('loggerBlock');
     debug('main');
-    document.getElementById('noscriptBlock').className = 'invisible';
+    document.getElementById('loadingBlock').className = 'invisible';
     document.getElementById('mainBlock').className = 'visible';
     var title = document.getElementById('noscriptTitle').innerHTML;
     document.title = title;
@@ -326,17 +326,17 @@ function main() {
     body = document.getElementsByTagName('body')[0];
     cast = document.getElementById('castBlock');
     welcome = document.getElementById('welcomeBlock');
-    fontFamilyControl = document.getElementById('fontFamilyControl');
-    fontWeightControl = document.getElementById('fontWeightControl');
-    fontStyleControl = document.getElementById('fontStyleControl');
-    defenceForegroundControl = document.getElementById('defenceForegroundControl');
-    defenceForegroundDisplay = document.getElementById('defenceForegroundDisplay');
-    defenceBackgroundControl = document.getElementById('defenceBackgroundControl');
-    defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplay');
-    attackForegroundControl = document.getElementById('attackForegroundControl');
-    attackForegroundDisplay = document.getElementById('attackForegroundDisplay');
-    attackBackgroundControl = document.getElementById('attackBackgroundControl');
-    attackBackgroundDisplay = document.getElementById('attackBackgroundDisplay');
+    fontFamilyControl = document.getElementById('fontFamilyControlID');
+    fontWeightControl = document.getElementById('fontWeightControlID');
+    fontStyleControl = document.getElementById('fontStyleControlID');
+    defenceForegroundControl = document.getElementById('defenceForegroundControlID');
+    defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
+    defenceBackgroundControl = document.getElementById('defenceBackgroundControlID');
+    defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplayID');
+    attackForegroundControl = document.getElementById('attackForegroundControlID');
+    attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
+    attackBackgroundControl = document.getElementById('attackBackgroundControlID');
+    attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
     reset();
     body.className = 'welcome';
 }
@@ -344,16 +344,19 @@ function main() {
 </head>
 
 <body onload="main()">
-  <table id="noscriptBlock" class="visible" cellspacing="0" cellpadding="0">
+  <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.5</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.51</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <br>
-        <p class="important">This page requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.</p>
-        <p class="important">Please enable JavaScript in your browser and reload the page.</p>
+        <script type="text/javascript">document.write('<p class="important">...loading, please wait...</p>')</script>
+        <noscript>
+          <p class="important">This page requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.</p>
+          <p class="important">Please enable JavaScript in your browser and reload the page.</p>
+        </noscript>
         <br>
         <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
       </td>
@@ -370,29 +373,29 @@ function main() {
               <table cellspacing="0" cellpadding="0">
                 <tr>
                   <td class="menu prefix">Font:</td>
-                  <td class="menu"><input id="fontFamilyControl" class="menu input" type="text" onchange="setFont()"></td>
+                  <td class="menu"><input id="fontFamilyControlID" class="menu input" type="text" onchange="setFont()"></td>
                   <td class="menu prefix">Defence:</td>
                   <td class="menu">
-                    <input id="defenceForegroundControl" class="menu input" type="text" onchange="setColors()">
-                    <span id="defenceForegroundDisplay" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="defenceForegroundControlID" class="menu input" type="text" onchange="setColors()">
+                    <span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
                     on
-                    <span id="defenceBackgroundDisplay" class="input">&nbsp;&nbsp;&nbsp;</span>
-                    <input id="defenceBackgroundControl" class="menu input" type="text" onchange="setColors()">
+                    <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="defenceBackgroundControlID" class="menu input" type="text" onchange="setColors()">
                   </td>
                 </tr>
                 <tr>
                   <td></td>
                   <td class="menu">
-                    <input id="fontWeightControl" class="input" type="checkbox" onchange="setFont()">bold
-                    <input id="fontStyleControl" class="input" type="checkbox" onchange="setFont()">italic
+                    <input id="fontWeightControlID" class="input" type="checkbox" onchange="setFont()">bold
+                    <input id="fontStyleControlID" class="input" type="checkbox" onchange="setFont()">italic
                   </td>
                   <td class="menu prefix">Attack:</td>
                   <td class="menu">
-                    <input id="attackForegroundControl" class="menu input" type="text" onchange="setColors()">
-                    <span id="attackForegroundDisplay" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="attackForegroundControlID" class="menu input" type="text" onchange="setColors()">
+                    <span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
                     on
-                    <span id="attackBackgroundDisplay" class="input">&nbsp;&nbsp;&nbsp;</span>
-                    <input id="attackBackgroundControl" class="menu input" type="text" onchange="setColors()">
+                    <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="attackBackgroundControlID" class="menu input" type="text" onchange="setColors()">
                   </td>
                 </tr>
               </table>
