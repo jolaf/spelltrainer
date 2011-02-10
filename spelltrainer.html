@@ -218,11 +218,11 @@ function start() {
     var test = document.getElementById('test');
     welcome.className = 'invisible';
     cast.className = 'visible';
-    for (var i = 0, a = 1000; i < spells.length; i++) {
-        test.innerHTML = spells[i];
-        a = Math.min(a, test.offsetHeight / test.offsetWidth);
+    aspect = 1000;
+    for (var i = 0; test.innerHTML = spells[i]; i++) {
+        aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
     }
-    aspect = a * 0.7;
+    aspect *= 0.7;
     cast.innerHTML = 'Get ready!';
     resize();
     body.onresize = onresize = resize;
@@ -257,11 +257,11 @@ function main() {
 </script>
 </head>
 
-<body>
+<body onload="main()">
   <table id="noscriptBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.43</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.44</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -307,6 +307,5 @@ function main() {
       </td>
     </tr>
   </table>
-  <script type="text/javascript">main()</script>
 </body>
 </html>
