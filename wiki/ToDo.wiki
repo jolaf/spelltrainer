@@ -3,23 +3,23 @@
 
 = Bugs =
 
-* Console works on IE badly.
-* FireFox gets slow and doesn't call onload() if image is not available.
+  * Console works on IE badly.
+  * FireFox gets slow and doesn't call onload() if image is not available.
 
 = Features =
 
-* Create top controls to set spells to use, font, colors, delay.
-* Measure spell relative casting time and make delays proportional.
-* Allow control of spells to use by spell and by group.
-* Include Transfiguration shields, Hooligan spells, anything else?
-* Create publishing script.
-* Create a fancy design.
+  * Create top controls to set spells to use, font, colors, delay.
+  * Measure spell relative casting time and make delays proportional.
+  * Allow control of spells to use by spell and by group.
+  * Include Transfiguration shields, Hooligan spells, anything else?
+  * Create publishing script.
+  * Create a fancy design.
 
 = Thoughts =
 
-* Maybe get rid of image for a more stable loading in FireFox.
-* If got rid of icon, remove bottom main() call.
-* If not got rid of icon, consider moving whole JavaScript to the page bottom.
-* Remove console altogether, maybe create some another footer.
-* Remove Python version altogether?
-* Think of adding support for fast series.
+  * Maybe get rid of image for a more stable loading in FireFox.
+  * If got rid of icon, remove bottom main() call.
+  * If not got rid of icon, consider moving whole JavaScript to the page bottom.
+  * Remove console altogether, maybe create some another footer.
+  * Remove Python version altogether?
+  * Think of adding support for fast series.
