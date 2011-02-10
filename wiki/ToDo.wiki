@@ -9,6 +9,7 @@
 = Features =
 
   * Create top controls to set spells to use, font, colors, delay.
+  * Create cookies to store the configuration.
   * Measure spell relative casting time and make delays proportional.
   * Allow control of spells to use by spell and by group.
   * Include Transfiguration shields, Hooligan spells, anything else?
