@@ -63,6 +63,25 @@ td.visible {
 	display: none;
 }
 
+td.menu {
+	color: black;
+	font-size: 70%;
+	font-weight: bold;
+}
+
+input.menu {
+	font-size: 100%;
+	padding: 1px;
+}
+
+.input {
+	border: 1px inset gray;
+}
+
+.prefix {
+	text-align: right;
+}
+
 img.logo {
 	background-color: white;
 	border: 0;
@@ -80,6 +99,7 @@ img.logo {
 }
 
 #infoBlock, #welcomeBlock {
+	color: black;
 	text-align: center;
 }
 
@@ -134,7 +154,7 @@ var MAXIMA = [];
 for (var i = 0, spell; spell = SIMPLA[i]; i++) {
      MAXIMA.push(spell + ' Maxima');
 };
-MAXIMA.concat(['Petrificus Totalus', 'Expelliarmus']);
+MAXIMA.push('Petrificus Totalus', 'Expelliarmus');
 
 var ULTIMA = [];
 for (var i = 0, spell; spell = SIMPLA[i]; i++) {
@@ -143,9 +163,7 @@ for (var i = 0, spell; spell = SIMPLA[i]; i++) {
 
 var RULE_OF_N_SPELLS = 3;
 
-var FONT_NAME = 'Verdana';
-var FONT_SIZE = 10;
-var FONT_STYLE = 'bold';
+var DEFAULT_FONT_NAME = 'Verdana,Arial,Helvetica,sans-serif';
 var MIN_FONT_SIZE = 20;
 
 var spellDelay = 3000;
@@ -208,23 +226,79 @@ function resize() {
     cast.style.fontSize = Math.floor(Math.min(cast.offsetHeight * 0.7, cast.offsetWidth * aspect)) + 'px';
 }
 
-function start() {
-    debug('start');
-    var spells = (useSimpla ? SIMPLA : []).concat(useMaxima ? MAXIMA : []).concat(useUltima ? ULTIMA : []);
-    attackSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
-    defenceSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
+function setFont() {
+    if (cast.className != 'visible') {
+        return;
+    }
+    debug('setFont');
+    var savedClass = body.className;
+    var savedContent = cast.innerHTML;
+    var spells = attackSpells.spells.concat(defenceSpells.spells);
     body.className = 'flash';
+    cast.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
+    cast.style.fontWeight = fontWeightControl.checked ? 'bold' : 'normal';
+    cast.style.fontStyle = fontStyleControl.checked ? 'italic' : 'normal';
     cast.innerHTML = '<span id="test"><\/span>';
     var test = document.getElementById('test');
-    welcome.className = 'invisible';
-    cast.className = 'visible';
     aspect = 1000;
     for (var i = 0; test.innerHTML = spells[i]; i++) {
         aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
     }
     aspect *= 0.7;
-    cast.innerHTML = 'Get ready!';
     resize();
+    cast.innerHTML = savedContent;
+    body.className = savedClass;
+}
+
+function getStyle(selector, style) {
+    var rules = new Array();
+    if (document.styleSheets[0].cssRules) {
+        rules = document.styleSheets[0].cssRules;
+    } else if (document.styleSheets[0].rules) {
+        rules = document.styleSheets[0].rules;
+    }
+    for (n in rules) {
+        if (rules[n].selectorText === selector) {
+            return rules[n].style;
+        }
+    }
+}
+
+function setColors() {
+    debug('setColors');
+    //defenceForegroundControl.value;
+    defenceForegroundDisplay.style.backgroundColor = defenceForegroundControl.value;
+    //defenceBackgroundControl.value;
+    defenceBackgroundDisplay.style.backgroundColor = defenceBackgroundControl.value;
+    //attackForegroundControl.value;
+    attackForegroundDisplay.style.backgroundColor = attackForegroundControl.value;
+    //attackBackgroundControl.value;
+    attackBackgroundDisplay.style.backgroundColor = attackBackgroundControl.value;
+}
+
+function reset() {
+    debug('reset');
+    defenceForegroundControl.value = 'green';
+    defenceBackgroundControl.value = 'black';
+    attackForegroundControl.value = 'white';
+    attackBackgroundControl.value = 'maroon';
+    setColors();
+    fontFamilyControl.value = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
+    fontWeightControl.checked = 'on';
+    fontStyleControl.checked = null;
+    setFont();
+}
+
+function start() {
+    debug('start');
+    var spells = (useSimpla ? SIMPLA : []).concat(useMaxima ? MAXIMA : [], useUltima ? ULTIMA : []);
+    attackSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
+    defenceSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
+    body.className = 'flash';
+    welcome.className = 'invisible';
+    cast.className = 'visible';
+    setFont();
+    cast.innerHTML = 'Get ready!';
     body.onresize = onresize = resize;
     body.className = 'ready';
     timeout = setTimeout('castSpell()', spellDelay);
@@ -245,13 +319,25 @@ function main() {
     debug('main');
     document.getElementById('noscriptBlock').className = 'invisible';
     document.getElementById('mainBlock').className = 'visible';
-    body = document.getElementsByTagName('body')[0];
-    cast = document.getElementById('castBlock');
-    welcome = document.getElementById('welcomeBlock');
     var title = document.getElementById('noscriptTitle').innerHTML;
     document.title = title;
     document.getElementById('headerTitle').innerHTML = title;
     document.getElementById('welcomeTitle').innerHTML = title;
+    body = document.getElementsByTagName('body')[0];
+    cast = document.getElementById('castBlock');
+    welcome = document.getElementById('welcomeBlock');
+    fontFamilyControl = document.getElementById('fontFamilyControl');
+    fontWeightControl = document.getElementById('fontWeightControl');
+    fontStyleControl = document.getElementById('fontStyleControl');
+    defenceForegroundControl = document.getElementById('defenceForegroundControl');
+    defenceForegroundDisplay = document.getElementById('defenceForegroundDisplay');
+    defenceBackgroundControl = document.getElementById('defenceBackgroundControl');
+    defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplay');
+    attackForegroundControl = document.getElementById('attackForegroundControl');
+    attackForegroundDisplay = document.getElementById('attackForegroundDisplay');
+    attackBackgroundControl = document.getElementById('attackBackgroundControl');
+    attackBackgroundDisplay = document.getElementById('attackBackgroundDisplay');
+    reset();
     body.className = 'welcome';
 }
 </script>
@@ -261,7 +347,7 @@ function main() {
   <table id="noscriptBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.44</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.5</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -280,6 +366,37 @@ function main() {
           <tr>
             <td><a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a></td>
             <td id="headerTitle"></td>
+            <td>
+              <table cellspacing="0" cellpadding="0">
+                <tr>
+                  <td class="menu prefix">Font:</td>
+                  <td class="menu"><input id="fontFamilyControl" class="menu input" type="text" onchange="setFont()"></td>
+                  <td class="menu prefix">Defence:</td>
+                  <td class="menu">
+                    <input id="defenceForegroundControl" class="menu input" type="text" onchange="setColors()">
+                    <span id="defenceForegroundDisplay" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    on
+                    <span id="defenceBackgroundDisplay" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="defenceBackgroundControl" class="menu input" type="text" onchange="setColors()">
+                  </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td class="menu">
+                    <input id="fontWeightControl" class="input" type="checkbox" onchange="setFont()">bold
+                    <input id="fontStyleControl" class="input" type="checkbox" onchange="setFont()">italic
+                  </td>
+                  <td class="menu prefix">Attack:</td>
+                  <td class="menu">
+                    <input id="attackForegroundControl" class="menu input" type="text" onchange="setColors()">
+                    <span id="attackForegroundDisplay" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    on
+                    <span id="attackBackgroundDisplay" class="input">&nbsp;&nbsp;&nbsp;</span>
+                    <input id="attackBackgroundControl" class="menu input" type="text" onchange="setColors()">
+                  </td>
+                </tr>
+              </table>
+            </td>
           </tr>
         </table>
       </td>
