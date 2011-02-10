@@ -4,7 +4,7 @@
 = Bugs =
 
   * Console works on IE badly.
-  * FireFox gets slow and doesn't call onload() if image is not available.
+  * -- FireFox gets slow and doesn't call onload() if image is not available.
 
 = Features =
 
@@ -18,9 +18,9 @@
 
 = Thoughts =
 
-  * Maybe get rid of image for a more stable loading in FireFox.
-  * If got rid of icon, remove bottom main() call.
-  * If not got rid of icon, consider moving whole JavaScript to the page bottom.
+  * -- Maybe get rid of image for a more stable loading in FireFox.
+  * + If got rid of icon, remove bottom main() call.
+  * -- If not got rid of icon, consider moving whole JavaScript to the page bottom.
   * Remove console altogether, maybe create some another footer.
   * Remove Python version altogether?
   * Think of adding support for fast series.
