@@ -12,6 +12,11 @@ html, body {
 	font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
+p {
+	margin: 2ex;
+	padding: 0;
+}
+
 .welcome {
 	color: black;
 	background-color: white;
@@ -70,10 +75,13 @@ img.logo {
 	text-align: center;
 }
 
-#noscriptTitle, #headerTitle, #welcomeTitle {
-	text-decoration: none;
+#headerTitle {
 	font-weight: bold;
-	color: black;
+}
+
+#noscriptTitle, #welcomeTitle {
+	margin: 0;
+	padding: 0;
 }
 
 #castBlock {
@@ -87,7 +95,8 @@ img.logo {
 	font-size: 300%;
 	font-weight: bold;
 	cursor: pointer;
-	margin: 0.2em 0 0.3em 0;
+	margin: 0.2ex 0 0.3ex 0;
+	padding: 0.5ex 0.5em;
 }
 
 #loggerBlock {
@@ -96,6 +105,13 @@ img.logo {
 	overflow: auto;
 }
 </style>
+<!--[if IE]>
+<style type="text/css">
+#startButton {
+	padding: 0;
+}
+</style>
+<![endif]-->
 <script type="text/javascript">
 var SIMPLA = ['Impedimenta', 'Tarantallegra', 'Silencio',		// Protego
               'Rictusempra', 'Incarcero', 'Mento Menores',		// Defendo
@@ -125,7 +141,7 @@ var flashDelay = 100;
 
 var useSimpla = true;
 var useMaxima = true;
-var useUltima = true;
+var useUltima = false;
 
 var trainAttack = true;
 var trainDefence = true;
@@ -189,11 +205,7 @@ function start() {
     cast.innerHTML = '<span id="test"><\/span>';
     var test = document.getElementById('test');
     welcome.style.display = 'none';
-    try {
-        cast.style.display = 'table-cell';
-    } catch(err) {
-        cast.style.display = 'block';
-    }
+    cast.style.display = (navigator.appName === 'Microsoft Internet Explorer') ? 'block' : 'table-cell';
     for (var i = 0, a = 1000; i < spells.length; i++) {
         test.innerHTML = spells[i];
         a = Math.min(a, test.offsetHeight / test.offsetWidth);
@@ -212,11 +224,7 @@ function stop() {
     clearTimeout(timeout);
     body.className = 'welcome';
     cast.style.display = 'none';
-    try {
-        welcome.style.display = 'table-cell';
-    } catch(err) {
-        welcome.style.display = 'block';
-    }
+    welcome.style.display = (navigator.appName === 'Microsoft Internet Explorer') ? 'block' : 'table-cell';
     body.onresize = onresize = null;
 }
 
@@ -224,11 +232,7 @@ function main() {
     logger = document.getElementById('loggerBlock');
     debug('main');
     document.getElementById('noscriptBlock').style.display = 'none';
-    try {
-        document.getElementById('mainBlock').style.display = 'table';
-    } catch(err) {
-        document.getElementById('mainBlock').style.display = 'block';
-    }
+    document.getElementById('mainBlock').style.display = (navigator.appName === 'Microsoft Internet Explorer') ? 'block' : 'table';
     body = document.getElementsByTagName('body')[0];
     cast = document.getElementById('castBlock');
     welcome = document.getElementById('welcomeBlock');
@@ -245,12 +249,15 @@ function main() {
   <table id="noscriptBlock" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1><a id="noscriptTitle" href="http://code.google.com/p/spelltrainer/">SpellTrainer v0.41</a></h1>
-        <a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a><br>
+        <h1 id="noscriptTitle">SpellTrainer v0.42</h1>
+        <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
+        <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <br>
         <p class="important">This page requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.</p>
         <p class="important">Please enable JavaScript in your browser and reload the page.</p>
+        <br>
+        <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
       </td>
     </tr>
   </table>
@@ -260,15 +267,16 @@ function main() {
         <table cellspacing="0" cellpadding="0">
           <tr>
             <td><a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a></td>
-            <td><a id="headerTitle" href="http://code.google.com/p/spelltrainer/"></a></td>
+            <td id="headerTitle"></td>
           </tr>
         </table>
       </td>
     </tr>
     <tr>
       <td id="welcomeBlock">
-        <h1><a id="welcomeTitle" href="http://code.google.com/p/spelltrainer/"></a></h1>
-        <a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a><br>
+        <h1 id="welcomeTitle"></h1>
+        <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
+        <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <p>Adjust the settings at the top bar as neccessary and press</p>
         <p><button id="startButton" type="button" onclick="start()">Start!</button></p>
@@ -276,6 +284,7 @@ function main() {
         <p>When you see a spell written in <span class="example attack">attack colors</span> &ndash; cast it at your imaginary opponent.</p>
         <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell is cast by your opponent at you, so cast the respective shield.</p>
         <p>Start with a lower tempo (bigger delay), and then lower the delay as your casting speed improves.</p>
+        <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
         <p class="important">Good luck!</p>
       </td>
       <td id="castBlock" onclick="stop()"></td>
