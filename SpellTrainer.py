@@ -9,7 +9,6 @@
 #
 # Version 1.03
 #
-
 from base64 import b64decode
 from getopt import getopt
 from os import remove
