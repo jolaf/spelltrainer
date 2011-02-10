@@ -51,22 +51,22 @@ img.logo {
 	border: 0;
 }
 
-#header, #footer {
+#headerBlock, #footerBlock {
         color: black;
 	background-color: gray;
 	height: 38px;
 }
 
-#noscript, #main {
+#noscriptBlock, #mainBlock {
 	width: 100%;
 	height: 100%;
 }
 
-#main {
+#mainBlock {
 	display: none;
 }
 
-#info, #welcome {
+#infoBlock, #welcomeBlock {
 	text-align: center;
 }
 
@@ -76,21 +76,21 @@ img.logo {
 	color: black;
 }
 
-#cast {
+#castBlock {
 	text-align: center;
 	vertical-align: middle;
 	font-weight: bold;
 	display: none;
 }
 
-#start {
+#startButton {
 	font-size: 300%;
 	font-weight: bold;
 	cursor: pointer;
 	margin: 0.2em 0 0.3em 0;
 }
 
-#logger {
+#loggerBlock {
 	height: 38px;
 	font-size: 50%;
 	overflow: auto;
@@ -118,6 +118,7 @@ var RULE_OF_N_SPELLS = 3;
 var FONT_NAME = 'Verdana';
 var FONT_SIZE = 10;
 var FONT_STYLE = 'bold';
+var MIN_FONT_SIZE = 20;
 
 var spellDelay = 3000;
 var flashDelay = 100;
@@ -131,7 +132,7 @@ var trainDefence = true;
 
 function debug(message) {
     logger.innerHTML += new Date().toLocaleTimeString() + '&nbsp;&nbsp;' + message + '<br>';
-    logger.scrollTop = logger.scrollHeight; // ToDo: this doesn't work well on IE
+    logger.scrollTop = logger.scrollHeight;
 }
 
 function SpellGenerator(spells, nSpells) {
@@ -175,10 +176,8 @@ function hideSpell() {
 
 function resize() {
     debug('resize');
-    var save = cast.innerHTML;
-    cast.innerHTML = null;
+    cast.style.fontSize = MIN_FONT_SIZE;
     cast.style.fontSize = Math.floor(Math.min(cast.offsetHeight * 0.7, cast.offsetWidth * aspect)) + 'px';
-    cast.innerHTML = save;
 }
 
 function start() {
@@ -190,7 +189,11 @@ function start() {
     cast.innerHTML = '<span id="test"><\/span>';
     var test = document.getElementById('test');
     welcome.style.display = 'none';
-    cast.style.display = 'table-cell';
+    try {
+        cast.style.display = 'table-cell';
+    } catch(err) {
+        cast.style.display = 'block';
+    }
     for (var i = 0, a = 1000; i < spells.length; i++) {
         test.innerHTML = spells[i];
         a = Math.min(a, test.offsetHeight / test.offsetWidth);
@@ -209,20 +212,28 @@ function stop() {
     clearTimeout(timeout);
     body.className = 'welcome';
     cast.style.display = 'none';
-    welcome.style.display = 'table-cell';
+    try {
+        welcome.style.display = 'table-cell';
+    } catch(err) {
+        welcome.style.display = 'block';
+    }
     body.onresize = onresize = null;
 }
 
 function main() {
-    logger = document.getElementById('logger');
+    logger = document.getElementById('loggerBlock');
     debug('main');
-    document.getElementById('noscript').style.display = 'none';
-    document.getElementById('main').style.display = 'table';
+    document.getElementById('noscriptBlock').style.display = 'none';
+    try {
+        document.getElementById('mainBlock').style.display = 'table';
+    } catch(err) {
+        document.getElementById('mainBlock').style.display = 'block';
+    }
     body = document.getElementsByTagName('body')[0];
-    cast = document.getElementById('cast');
-    welcome = document.getElementById('welcome');
+    cast = document.getElementById('castBlock');
+    welcome = document.getElementById('welcomeBlock');
     var title = document.getElementById('noscriptTitle').innerHTML;
-    document.getElementsByTagName('title')[0].innerHTML = title;
+    document.title = title;
     document.getElementById('headerTitle').innerHTML = title;
     document.getElementById('welcomeTitle').innerHTML = title;
     body.className = 'welcome';
@@ -230,11 +241,11 @@ function main() {
 </script>
 </head>
 
-<body onload="main()">
-  <table id="noscript" cellspacing="0" cellpadding="0">
+<body>
+  <table id="noscriptBlock" cellspacing="0" cellpadding="0">
     <tr>
-      <td id="info">
-        <h1><a id="noscriptTitle" href="http://code.google.com/p/spelltrainer/">SpellTrainer v0.4</a></h1>
+      <td id="infoBlock">
+        <h1><a id="noscriptTitle" href="http://code.google.com/p/spelltrainer/">SpellTrainer v0.41</a></h1>
         <a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a><br>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <br>
@@ -243,9 +254,9 @@ function main() {
       </td>
     </tr>
   </table>
-  <table id="main" cellspacing="0" cellpadding="0">
+  <table id="mainBlock" cellspacing="0" cellpadding="0">
     <tr>
-      <td id="header">
+      <td id="headerBlock">
         <table cellspacing="0" cellpadding="0">
           <tr>
             <td><a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a></td>
@@ -255,23 +266,23 @@ function main() {
       </td>
     </tr>
     <tr>
-      <td id="welcome">
+      <td id="welcomeBlock">
         <h1><a id="welcomeTitle" href="http://code.google.com/p/spelltrainer/"></a></h1>
         <a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a><br>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <p>Adjust the settings at the top bar as neccessary and press</p>
-        <p><button id="start" type="button" onclick="start()">Start!</button></p>
+        <p><button id="startButton" type="button" onclick="start()">Start!</button></p>
         <p class="important">Click anywhere in the spell window to stop and return to this screen.</p>
         <p>When you see a spell written in <span class="example attack">attack colors</span> &ndash; cast it at your imaginary opponent.</p>
         <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell is cast by your opponent at you, so cast the respective shield.</p>
         <p>Start with a lower tempo (bigger delay), and then lower the delay as your casting speed improves.</p>
         <p class="important">Good luck!</p>
       </td>
-      <td id="cast" onclick="stop()"></td>
+      <td id="castBlock" onclick="stop()"></td>
     </tr>
     <tr>
-      <td id="footer">
-        <div id="logger"></div>
+      <td id="footerBlock">
+        <div id="loggerBlock"></div>
       </td>
     </tr>
   </table>

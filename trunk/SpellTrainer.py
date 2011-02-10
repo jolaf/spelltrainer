@@ -7,16 +7,8 @@
 #
 # Uses TkInter for GUI: http://wiki.python.org/moin/TkInter
 #
-# Version 1.02
+# Version 1.03
 #
-
-# ToDo:
-# - Allow specifying colors and fonts from command line options
-# - Make frequency of appearance depend on level
-# - Make delay depend on level
-# - Include Hogwarts hooligan spells (to train fast going in close quarters)
-# - Include some specialized spells
-# - Include support for fast series
 
 from base64 import b64decode
 from getopt import getopt
