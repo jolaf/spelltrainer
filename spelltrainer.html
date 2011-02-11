@@ -73,7 +73,7 @@ td.menu {
 	font-weight: bold;
 	vertical-align: middle;
 	white-space: nowrap;
-	padding-left: 1em;
+	padding-left: 0.6em;
 }
 
 input.menu {
@@ -108,7 +108,7 @@ span.input {
 
 .button {
 	width: 5em;
-	height: 35px;
+	height: 42px;
 }
 
 #speedBlock {
@@ -130,7 +130,7 @@ img.logo {
 #headerBlock, #footerBlock {
 	color: black;
 	background-color: gray;
-	height: 38px;
+	height: 42px;
 }
 
 #headerTable {
@@ -191,6 +191,10 @@ table.visible, td.visible {
 
 input.checkbox {
 	margin-left: -3px;
+}
+
+span.input {
+	padding-top: 2px;
 }
 
 #bigStartButton {
@@ -258,7 +262,7 @@ function SpellGenerator(spells, nSpells) {
 }
 
 function castSpell() {
-    if (trainAttack && (!trainDefence || Math.random() >= 0.5)) {
+    if (attackControl.checked && (!defenceControl.checked || Math.random() >= 0.5)) {
         cast.innerHTML = attackSpells.next();
         body.className = 'attack';
         debug('Attack: ' + cast.innerHTML);
@@ -348,8 +352,10 @@ function reset() {
     debug('reset');
     speedControl.value = 3;
     setSpeed();
+    attackControl.checked = 'on';
     attackForegroundControl.value = 'green';
     attackBackgroundControl.value = 'black';
+    defenceControl.checked = 'on';
     defenceForegroundControl.value = 'white';
     defenceBackgroundControl.value = 'maroon';
     setColors();
@@ -406,10 +412,12 @@ function main() {
     speedScroll = document.getElementById('speedBlock');
     speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
     speedScroll.onscroll = adjustSpeed;
+    attackControl = document.getElementById('attackControlID');
     attackForegroundControl = document.getElementById('attackForegroundControlID');
     attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
     attackBackgroundControl = document.getElementById('attackBackgroundControlID');
     attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
+    defenceControl = document.getElementById('defenceControlID');
     defenceForegroundControl = document.getElementById('defenceForegroundControlID');
     defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
     defenceBackgroundControl = document.getElementById('defenceBackgroundControlID');
@@ -427,8 +435,8 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.58</h1>
-        <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
+        <h1 id="noscriptTitle">SpellTrainer v0.59</h1>
+        <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <br>
@@ -455,32 +463,16 @@ function main() {
                   <td>
                     <table cellspacing="0" cellpadding="0">
                       <tr>
-                        <td rowspan="2" class="menu">
-                          <button id="startButtonID" class="button" type="button" onclick="start()">Start</button>
-                        </td>
-                        <td class="menu">Tempo:
-                          <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed()">
-                          <span class="light">1 slowest, 10 fastest</span>
-                        </td>
-                        <td class="menu prefix">Attack:&nbsp;<input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>on<span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()">
-                        </td>
-                        <td class="menu">Font:&nbsp;<input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont()"></td>
-                        <td rowspan="2" class="menu">
-                          <button id="resetButtonID" class="button" type="button" onclick="reset()">Reset</button>
-                        </td>
+                        <td rowspan="2" class="menu"><button id="startButtonID" class="button" type="button" onclick="start()">Start</button></td>
+                        <td class="menu">Tempo: <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed()"> <span class="light">1 slowest, 10 fastest</span></td>
+                        <td class="menu prefix">Attack: <input id="attackControlID" class="checkbox" type="checkbox" checked> <input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"></td>
+                        <td class="menu">Font: <input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont()"></td>
+                        <td rowspan="2" class="menu"><button id="resetButtonID" class="button" type="button" onclick="reset()">Reset</button></td>
                       </tr>
                       <tr>
-                        <td class="menu">
-                          <div id="speedBlock">
-                            <div id="speedFill">&nbsp;</div>
-                          </div>
-                        </td>
-                        <td class="menu prefix">Defence:&nbsp;<input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>on<span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()">
-                        </td>
-                        <td class="menu">
-                          <input id="fontWeightControlID" class="checkbox" type="checkbox" onclick="setFont()">bold
-                          <input id="fontStyleControlID" class="checkbox" type="checkbox" onclick="setFont()">italic
-                        </td>
+                        <td class="menu"><div id="speedBlock"><div id="speedFill">&nbsp;</div></div></td>
+                        <td class="menu prefix">Defence: <input id="defenceControlID" class="checkbox" type="checkbox" checked> <input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"></td>
+                        <td class="menu"><input id="fontWeightControlID" class="checkbox" type="checkbox" onclick="setFont()">bold <input id="fontStyleControlID" class="checkbox" type="checkbox" onclick="setFont()">italic</td>
                       </tr>
                     </table>
                   </td>
@@ -494,7 +486,7 @@ function main() {
     <tr>
       <td id="welcomeBlock" class="visible">
         <h1 id="welcomeTitle"></h1>
-        <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
+        <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <p>Adjust the settings at the top bar as neccessary and press</p>
