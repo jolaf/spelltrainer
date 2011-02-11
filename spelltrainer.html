@@ -82,6 +82,11 @@ input.menu {
 	text-align: right;
 }
 
+.button {
+	width: 5em;
+	height: 35px;
+}
+
 #speedBlock {
 	width: 200px;
 	height: 15px;
@@ -101,6 +106,10 @@ img.logo {
 	color: black;
 	background-color: gray;
 	height: 38px;
+}
+
+#headerTable {
+	width: 100%;
 }
 
 #loadingBlock, #mainBlock {
@@ -129,7 +138,7 @@ img.logo {
 	font-weight: bold;
 }
 
-#startButton {
+#bigStartButton {
 	font-size: 300%;
 	font-weight: bold;
 	cursor: pointer;
@@ -149,7 +158,7 @@ table.visible, td.visible {
 	display: block;
 }
 
-#startButton {
+#bigStartButton {
 	padding: 0;
 }
 </style>
@@ -200,12 +209,14 @@ function SpellGenerator(spells, nSpells) {
             spell = this.spells[Math.floor(Math.random() * this.spells.length)];
             baseIndex = spell.indexOf(' ');
             baseSpell = baseIndex >= 0 ? spell.slice(0, baseIndex) : spell;
-            for (var i = 0, previousSpell; previousSpell = this.previousSpells[i]; i++) {
-                if (previousSpell === baseSpell) {
-                    continue newSpell;
+            if (this.spells.length >= this.nSpells) {
+                for (var i = 0, previousSpell; previousSpell = this.previousSpells[i]; i++) {
+                    if (previousSpell === baseSpell) {
+                        continue newSpell;
+                    }
                 }
             }
-            this.previousSpells = (this.previousSpells.concat([baseSpell])).slice(-(this.nSpells - 1));
+            this.previousSpells = this.previousSpells.concat([baseSpell]).slice(-this.nSpells + 1);
             return spell;
         }
     }
@@ -315,6 +326,8 @@ function reset() {
 
 function start() {
     debug('start');
+    startButton.innerHTML = 'Stop';
+    startButton.onclick = stop;
     var spells = (useSimpla ? SIMPLA : []).concat(useMaxima ? MAXIMA : [], useUltima ? ULTIMA : []);
     attackSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
     defenceSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
@@ -331,6 +344,8 @@ function start() {
 function stop() {
     debug('stop');
     clearTimeout(timeout);
+    startButton.innerHTML = 'Start';
+    startButton.onclick = start;
     body.className = 'flash';
     cast.className = 'invisible';
     welcome.className = 'visible';
@@ -350,6 +365,8 @@ function main() {
     body = document.getElementsByTagName('body')[0];
     cast = document.getElementById('castBlock');
     welcome = document.getElementById('welcomeBlock');
+    startButton = document.getElementById('startButtonID');
+    resetButton = document.getElementById('resetButtonID');
     fontFamilyControl = document.getElementById('fontFamilyControlID');
     fontWeightControl = document.getElementById('fontWeightControlID');
     fontStyleControl = document.getElementById('fontStyleControlID');
@@ -363,6 +380,7 @@ function main() {
     attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
     speedControl = document.getElementById('speedControlID');
     speedSlider = document.getElementById('speedBlock');
+    speedSlider.onscroll = adjustSpeed;
     reset();
     body.className = 'welcome';
 }
@@ -373,12 +391,12 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.53</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.54</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <br>
-        <script type="text/javascript">document.write('<p class="important">...loading, please wait...</p>')</script>
+        <script type="text/javascript">document.write('<p class="important">...loading, please wait...<\/p>')</script>
         <noscript>
           <p class="important">This page requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.</p>
           <p class="important">Please enable JavaScript in your browser and reload the page.</p>
@@ -391,45 +409,57 @@ function main() {
   <table id="mainBlock" class="invisible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="headerBlock">
-        <table cellspacing="0" cellpadding="0">
+        <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
             <td><a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a></td>
             <td id="headerTitle"></td>
             <td>
-              <table cellspacing="0" cellpadding="0">
+              <table align="right" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td class="menu prefix">Font:&nbsp;</td>
-                  <td class="menu"><input id="fontFamilyControlID" class="menu input" type="text" onchange="setFont()"></td>
-                  <td class="menu prefix">Attack:&nbsp;</td>
-                  <td class="menu">
-                    <input id="attackForegroundControlID" class="menu input" type="text" onchange="setColors()">
-                    <span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                    on
-                    <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                    <input id="attackBackgroundControlID" class="menu input" type="text" onchange="setColors()">
-                  </td>
-                  <td class="menu">Speed:
-                    <input id="speedControlID" class="menu input" type="text" onchange="setSpeed()">
-                  </td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td class="menu">
-                    <input id="fontWeightControlID" class="input" type="checkbox" onchange="setFont()">bold
-                    <input id="fontStyleControlID" class="input" type="checkbox" onchange="setFont()">italic
-                  </td>
-                  <td class="menu prefix">Defence:&nbsp;</td>
-                  <td class="menu">
-                    <input id="defenceForegroundControlID" class="menu input" type="text" onchange="setColors()">
-                    <span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                    on
-                    <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                    <input id="defenceBackgroundControlID" class="menu input" type="text" onchange="setColors()">
-                  </td>
-                  <td class="menu">
-                    <div id="speedBlock" onscroll="adjustSpeed()">
-                      <div id="speedFill">&nbsp;</div>
-                    </div>
+                  <td>
+                    <table cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td rowspan="2" class="menu">
+                          <button id="startButtonID" class="button" type="button" onclick="start()">Start</button>
+                        </td>
+                        <td class="menu prefix">Font:&nbsp;</td>
+                        <td class="menu"><input id="fontFamilyControlID" class="menu input" type="text" onchange="setFont()"></td>
+                        <td class="menu prefix">Attack:&nbsp;</td>
+                        <td class="menu">
+                          <input id="attackForegroundControlID" class="menu input" type="text" onchange="setColors()">
+                          <span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                          on
+                          <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                          <input id="attackBackgroundControlID" class="menu input" type="text" onchange="setColors()">
+                        </td>
+                        <td class="menu">Speed:
+                          <input id="speedControlID" class="menu input" type="text" onchange="setSpeed()">
+                        </td>
+                        <td rowspan="2" class="menu">
+                          <button id="resetButtonID" class="button" type="button" onclick="reset()">Reset</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td class="menu">
+                          <input id="fontWeightControlID" class="input" type="checkbox" onchange="setFont()">bold
+                          <input id="fontStyleControlID" class="input" type="checkbox" onchange="setFont()">italic
+                        </td>
+                        <td class="menu prefix">Defence:&nbsp;</td>
+                        <td class="menu">
+                          <input id="defenceForegroundControlID" class="menu input" type="text" onchange="setColors()">
+                          <span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                          on
+                          <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
+                          <input id="defenceBackgroundControlID" class="menu input" type="text" onchange="setColors()">
+                        </td>
+                        <td class="menu">
+                          <div id="speedBlock">
+                            <div id="speedFill">&nbsp;</div>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
@@ -445,7 +475,7 @@ function main() {
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <p>Adjust the settings at the top bar as neccessary and press</p>
-        <p><button id="startButton" type="button" onclick="start()">Start!</button></p>
+        <p><button id="bigStartButton" type="button" onclick="start()">Start!</button></p>
         <p class="important">Click anywhere in the spell window to stop and return to this screen.</p>
         <p>When you see a spell written in <span class="example attack">attack colors</span> &ndash; cast it at your imaginary opponent.</p>
         <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell is cast by your opponent at you, so cast the respective shield.</p>
