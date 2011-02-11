@@ -67,6 +67,7 @@ td.menu {
 	color: black;
 	font-size: 70%;
 	font-weight: bold;
+	white-space: nowrap;
 }
 
 input.menu {
@@ -89,12 +90,13 @@ input.menu {
 
 #speedBlock {
 	width: 200px;
-	height: 15px;
+	height: 30px;
 	overflow: scroll;
 }
 
 #speedFill {
 	width: 1000px;
+	height: 0;
 }
 
 img.logo {
@@ -125,11 +127,13 @@ img.logo {
 #headerTitle {
 	color: black;
 	font-weight: bold;
+	white-space: nowrap;
 }
 
 #noscriptTitle, #welcomeTitle {
 	margin: 0;
 	padding: 0;
+	white-space: nowrap;
 }
 
 #castBlock {
@@ -300,12 +304,12 @@ function setColors() {
 
 function setSpeed() {
     debug('setSpeed');
-    speedSlider.scrollLeft = (speedSlider.scrollWidth - speedSlider.offsetWidth) * (speedControl.value - 1) / 9;
+    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
 }
 
 function adjustSpeed() {
     debug('adjustSpeed');
-    speedControl.value = 1 + Math.round(speedSlider.scrollLeft * 9 / (speedSlider.scrollWidth - speedSlider.offsetWidth));
+    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
     spellDelay = BASE_DELAY / speedControl.value;
 }
 
@@ -379,8 +383,9 @@ function main() {
     attackBackgroundControl = document.getElementById('attackBackgroundControlID');
     attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
     speedControl = document.getElementById('speedControlID');
-    speedSlider = document.getElementById('speedBlock');
-    speedSlider.onscroll = adjustSpeed;
+    speedScroll = document.getElementById('speedBlock');
+    speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
+    speedScroll.onscroll = adjustSpeed;
     reset();
     body.className = 'welcome';
 }
@@ -391,7 +396,7 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.55</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.56</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
