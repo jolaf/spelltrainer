@@ -12,9 +12,23 @@ html, body {
 	font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
-p {
-	margin: 2ex;
+p, td {
+	font-size: 13px;
+	line-height: 1.4;
+	margin: 2ex 0;
 	padding: 0;
+}
+
+.bold {
+	font-weight: bold;
+}
+
+.light {
+	font-weight: normal;
+}
+
+.right {
+	text-align: right;
 }
 
 .welcome {
@@ -42,17 +56,9 @@ p {
 	background-color: white;
 }
 
-.important {
-	font-weight: bold;
-}
-
 .example {
 	font-weight: bold;
 	padding: 3px;
-}
-
-.light {
-	font-weight: normal;
 }
 
 table.visible {
@@ -68,12 +74,29 @@ td.visible {
 }
 
 td.menu {
-	color: black;
-	font-size: 70%;
-	font-weight: bold;
 	vertical-align: middle;
 	white-space: nowrap;
+	font-size: 70%;
+	font-weight: bold;
+	color: black;
 	padding-left: 0.6em;
+}
+
+button.menu {
+	width: 5em;
+	height: 42px;
+}
+
+.input {
+	border: 1px inset gray;
+}
+
+span.input {
+	padding: 1px;
+}
+
+input.input {
+	width: 4em;
 }
 
 input.menu {
@@ -81,49 +104,19 @@ input.menu {
 	padding: 1px;
 }
 
-.input {
-	border: 1px inset gray;
-}
-
-input.input {
-	width: 4em;
-}
-
 input.checkbox {
 	border: 0;
 	margin: 0;
 }
 
-span.input {
-	padding: 1px;
-}
-
-#fontFamilyControlID {
-	width: 5em;
-}
-
-.prefix {
-	text-align: right;
-}
-
-.button {
-	width: 5em;
-	height: 42px;
-}
-
-#speedBlock {
-	width: 200px;
-	height: 30px;
-	overflow: scroll;
-}
-
-#speedFill {
-	width: 1000px;
-	height: 0;
-}
-
 img.logo {
 	background-color: white;
+	border: 0;
+}
+
+img.valid {
+	width: 88px;
+	height: 31px;
 	border: 0;
 }
 
@@ -135,16 +128,6 @@ img.logo {
 
 #headerTable {
 	width: 100%;
-}
-
-#loadingBlock, #mainBlock {
-	width: 100%;
-	height: 100%;
-}
-
-#infoBlock, #welcomeBlock {
-	color: black;
-	text-align: center;
 }
 
 #headerTitle {
@@ -159,8 +142,34 @@ img.logo {
 	white-space: nowrap;
 }
 
+#loadingBlock, #mainBlock {
+	width: 100%;
+	height: 100%;
+}
+
+#infoBlock, #welcomeBlock {
+	color: black;
+	text-align: center;
+	white-space: nowrap;
+}
+
+#speedBlock {
+	width: 200px;
+	height: 30px;
+	overflow: scroll;
+}
+
+#speedFill {
+	width: 1000px;
+	height: 0;
+}
+
 #speedControlID {
 	width: 2em;
+}
+
+#fontFamilyControlID {
+	width: 5em;
 }
 
 #castBlock {
@@ -173,7 +182,7 @@ img.logo {
 	font-size: 300%;
 	font-weight: bold;
 	cursor: pointer;
-	margin: 0.2ex 0 0.3ex 0;
+	margin: 0.5ex 0;
 	padding: 0.5ex 0.5em;
 }
 
@@ -197,50 +206,29 @@ span.input {
 	padding-top: 2px;
 }
 
+#speedBlock {
+	overflow-x: scroll;
+	overflow-y: hidden;
+}
+
 #bigStartButton {
-	padding: 0;
+	margin: 1.5ex 0;
+	padding: 0.1ex 0;
 }
 </style>
 <![endif]-->
 <script type="text/javascript">
-var SIMPLA = ['Impedimenta', 'Tarantallegra', 'Silencio',		// Protego
-              'Rictusempra', 'Incarcero', 'Mento Menores',		// Defendo
-              'Stupefy', 'Achelitus', 'Maledicero',			// Enervate
-              'Incendio', 'Deluvium', 'Tormencio', 'Conjunctivitus'];	// VIP
-
-var MAXIMA = [];
-for (var i = 0, spell; spell = SIMPLA[i]; i++) {
-     MAXIMA.push(spell + ' Maxima');
-};
-MAXIMA.push('Petrificus Totalus', 'Expelliarmus');
-
-var ULTIMA = [];
-for (var i = 0, spell; spell = SIMPLA[i]; i++) {
-     ULTIMA.push(spell + ' Ultima');
-};
-
-var RULE_OF_N_SPELLS = 3;
-
 var DEFAULT_FONT_NAME = 'Verdana,Arial,Helvetica,sans-serif';
 var MIN_FONT_SIZE = 20;
-var BASE_DELAY = 10000;
-var FLASH_DELAY = 100;
-
-var useSimpla = true;
-var useMaxima = true;
-var useUltima = false;
-
-var trainAttack = true;
-var trainDefence = true;
+var RULE_OF_N_SPELLS = 3;
 
 function debug(message) {
     logger.innerHTML += new Date().toLocaleTimeString() + '&nbsp;&nbsp;' + message + '<br>';
     logger.scrollTop = logger.scrollHeight;
 }
 
-function SpellGenerator(spells, nSpells) {
-    this.spells = spells;
-    this.nSpells = nSpells;
+function SpellGenerator() {
+    this.spells = [];
     this.previousSpells = [];
     this.next = function() {
         newSpell:
@@ -248,17 +236,32 @@ function SpellGenerator(spells, nSpells) {
             spell = this.spells[Math.floor(Math.random() * this.spells.length)];
             baseIndex = spell.indexOf(' ');
             baseSpell = baseIndex >= 0 ? spell.slice(0, baseIndex) : spell;
-            if (this.spells.length >= this.nSpells) {
+            if (this.spells.length >= RULE_OF_N_SPELLS) {
                 for (var i = 0, previousSpell; previousSpell = this.previousSpells[i]; i++) {
                     if (previousSpell === baseSpell) {
                         continue newSpell;
                     }
                 }
             }
-            this.previousSpells = this.previousSpells.concat([baseSpell]).slice(-this.nSpells + 1);
+            this.previousSpells = this.previousSpells.concat([baseSpell]).slice(-RULE_OF_N_SPELLS + 1);
             return spell;
         }
     }
+}
+
+function setSpells(element) {
+    if (!simplaSpellControl.checked && !maximaSpellControl.checked && !ultimaSpellControl.checked) {
+        (element || simplaSpellControl).checked = true;
+    }
+    if (cast.className != 'visible') {
+        return;
+    }
+    debug('setSpells');
+    attackSpells.spells = defenceSpells.spells =
+        (simplaSpellControl.checked ? vipSpellControl.checked ? simpla.concat(simplaVip) : simpla : []).concat(
+        (maximaSpellControl.checked ? vipSpellControl.checked ? maxima.concat(maximaVip) : maxima : []),
+        (ultimaSpellControl.checked ? vipSpellControl.checked ? ultima.concat(ultimaVip) : ultima : []));
+    setFontNeeded = true;
 }
 
 function castSpell() {
@@ -276,7 +279,10 @@ function castSpell() {
 
 function hideSpell() {
     body.className = 'flash';
-    timeout = setTimeout('castSpell()', FLASH_DELAY);
+    timeout = setTimeout('castSpell()', 100);
+    if (setFontNeeded) {
+        setFont();
+    }
 }
 
 function setSpeed() {
@@ -287,31 +293,29 @@ function setSpeed() {
 function adjustSpeed() {
     debug('adjustSpeed');
     speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
-    spellDelay = BASE_DELAY / speedControl.value;
-}
-
-function getStyle(selector) {
-    var rules = document.styleSheets[0].cssRules;
-    if (!rules) {
-        rules = document.styleSheets[0].rules;
-    }
-    for (var i = 0; rule = rules[i]; i++) {
-        if (rule.selectorText === selector) {
-            return rule.style;
-        }
-    }
-}
-
-function doSetColors(selector, field, display, control, defaultValue) {
-    try {
-        getStyle(selector)[field] = display.style.backgroundColor = control.value;
-    } catch(err) {
-        getStyle(selector)[field] = display.style.backgroundColor = defaultValue;
-    }
+    spellDelay = 10000 / speedControl.value;
 }
 
 function setColors() {
     debug('setColors');
+    function doSetColors(selector, field, display, control, defaultValue) {
+        function getStyle(selector) {
+            var rules = document.styleSheets[0].cssRules;
+            if (!rules) {
+                rules = document.styleSheets[0].rules;
+            }
+            for (var i = 0; rule = rules[i]; i++) {
+                if (rule.selectorText === selector) {
+                    return rule.style;
+                }
+            }
+        }
+        try {
+            getStyle(selector)[field] = display.style.backgroundColor = control.value;
+        } catch(err) {
+            getStyle(selector)[field] = display.style.backgroundColor = defaultValue;
+        }
+    }
     doSetColors('.attack', 'color', attackForegroundDisplay, attackForegroundControl, 'gray');
     doSetColors('.attack', 'backgroundColor', attackBackgroundDisplay, attackBackgroundControl, 'white');
     doSetColors('.defence', 'color', defenceForegroundDisplay, defenceForegroundControl, 'gray');
@@ -329,6 +333,7 @@ function setFont() {
         return;
     }
     debug('setFont');
+    setFontNeeded = false;
     var savedClass = body.className;
     var savedContent = cast.innerHTML;
     var spells = attackSpells.spells.concat(defenceSpells.spells);
@@ -336,6 +341,7 @@ function setFont() {
     cast.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
     cast.style.fontWeight = fontWeightControl.checked ? 'bold' : 'normal';
     cast.style.fontStyle = fontStyleControl.checked ? 'italic' : 'normal';
+    cast.style.fontSize = MIN_FONT_SIZE;
     cast.innerHTML = '<span id="test"><\/span>';
     var test = document.getElementById('test');
     aspect = 1000;
@@ -348,33 +354,14 @@ function setFont() {
     body.className = savedClass;
 }
 
-function reset() {
-    debug('reset');
-    speedControl.value = 3;
-    setSpeed();
-    attackControl.checked = 'on';
-    attackForegroundControl.value = 'green';
-    attackBackgroundControl.value = 'black';
-    defenceControl.checked = 'on';
-    defenceForegroundControl.value = 'white';
-    defenceBackgroundControl.value = 'maroon';
-    setColors();
-    fontFamilyControl.value = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
-    fontWeightControl.checked = 'on';
-    fontStyleControl.checked = null;
-    setFont();
-}
-
 function start() {
     debug('start');
     startButton.innerHTML = 'Stop';
     startButton.onclick = stop;
-    var spells = (useSimpla ? SIMPLA : []).concat(useMaxima ? MAXIMA : [], useUltima ? ULTIMA : []);
-    attackSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
-    defenceSpells = new SpellGenerator(spells, RULE_OF_N_SPELLS);
     body.className = 'flash';
     welcome.className = 'invisible';
     cast.className = 'visible';
+    setSpells();
     setFont();
     cast.innerHTML = 'Get ready!';
     body.onresize = onresize = resize;
@@ -394,56 +381,107 @@ function stop() {
     body.onresize = onresize = null;
 }
 
+function reset() {
+    debug('reset');
+    simplaSpellControl.checked = true;
+    maximaSpellControl.checked = true;
+    ultimaSpellControl.checked = false;
+    vipSpellControl.checked = true;
+    speedControl.value = 3;
+    setSpeed();
+    attackControl.checked = true;
+    attackForegroundControl.value = 'green';
+    attackBackgroundControl.value = 'black';
+    defenceControl.checked = true;
+    defenceForegroundControl.value = 'white';
+    defenceBackgroundControl.value = 'maroon';
+    setColors();
+    fontFamilyControl.value = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
+    fontWeightControl.checked = true;
+    fontStyleControl.checked = false;
+    setSpells();
+}
+
 function main() {
     logger = document.getElementById('loggerBlock');
     debug('main');
-    document.getElementById('loadingBlock').className = 'invisible';
-    document.getElementById('mainBlock').className = 'visible';
+    // Create basic spell lists
+    simpla = ['Impedimenta', 'Tarantallegra', 'Silencio',	// Protego
+              'Rictusempra', 'Incarcero', 'Mento Menores',	// Defendo
+              'Stupefy', 'Achelitus', 'Maledicero'];		// Enervate
+    simplaVip = ['Incendio', 'Deluvium', 'Tormencio', 'Conjunctivitus'];
+    function arrayWithSuffix(array, suffix) {
+        ret = [];
+        for (var i = 0, s; s = array[i]; i++) {
+             ret.push(s + ' ' + suffix);
+        };
+        return ret;
+    }
+    maxima = arrayWithSuffix(simpla, 'Maxima').concat('Petrificus Totalus');
+    maximaVip = arrayWithSuffix(simplaVip, 'Maxima').concat('Expelliarmus');
+    ultima = arrayWithSuffix(simpla, 'Ultima');
+    ultimaVip = arrayWithSuffix(simplaVip, 'Ultima');
+    attackSpells = new SpellGenerator();
+    defenceSpells = new SpellGenerator();
+    // Insert page title wherever appropriate
     var title = document.getElementById('noscriptTitle').innerHTML;
     document.title = title;
     document.getElementById('headerTitle').innerHTML = title;
     document.getElementById('welcomeTitle').innerHTML = title;
+    // Show main page
+    document.getElementById('loadingBlock').className = 'invisible';
+    document.getElementById('mainBlock').className = 'visible';
+    // Basic blocks
     body = document.getElementsByTagName('body')[0];
     cast = document.getElementById('castBlock');
     welcome = document.getElementById('welcomeBlock');
     startButton = document.getElementById('startButtonID');
     resetButton = document.getElementById('resetButtonID');
+    // Spell controls
+    simplaSpellControl = document.getElementById('simplaSpellControlID');
+    maximaSpellControl = document.getElementById('maximaSpellControlID');
+    ultimaSpellControl = document.getElementById('ultimaSpellControlID');
+    vipSpellControl = document.getElementById('vipSpellControlID');
+    // Speed controls
     speedControl = document.getElementById('speedControlID');
     speedScroll = document.getElementById('speedBlock');
     speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
     speedScroll.onscroll = adjustSpeed;
+    // Attack controls
     attackControl = document.getElementById('attackControlID');
     attackForegroundControl = document.getElementById('attackForegroundControlID');
     attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
     attackBackgroundControl = document.getElementById('attackBackgroundControlID');
     attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
+    // Defence controls
     defenceControl = document.getElementById('defenceControlID');
     defenceForegroundControl = document.getElementById('defenceForegroundControlID');
     defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
     defenceBackgroundControl = document.getElementById('defenceBackgroundControlID');
     defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplayID');
+    // Font controls
     fontFamilyControl = document.getElementById('fontFamilyControlID');
     fontWeightControl = document.getElementById('fontWeightControlID');
     fontStyleControl = document.getElementById('fontStyleControlID');
+    // Load initial configuration
     reset();
     body.className = 'welcome';
 }
 </script>
 </head>
-
 <body onload="main()">
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.59</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.6</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <br>
-        <script type="text/javascript">document.write('<p class="important">...loading, please wait...<\/p>')</script>
+        <script type="text/javascript">document.write('<p class="bold">...loading, please wait...<\/p>')</script>
         <noscript>
-          <p class="important">This page requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.</p>
-          <p class="important">Please enable JavaScript in your browser and reload the page.</p>
+          <p class="bold">This page requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.</p>
+          <p class="bold">Please enable JavaScript in your browser and reload the page.</p>
         </noscript>
         <br>
         <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
@@ -463,15 +501,19 @@ function main() {
                   <td>
                     <table cellspacing="0" cellpadding="0">
                       <tr>
-                        <td rowspan="2" class="menu"><button id="startButtonID" class="button" type="button" onclick="start()">Start</button></td>
-                        <td class="menu">Tempo: <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed()"> <span class="light">1 slowest, 10 fastest</span></td>
-                        <td class="menu prefix">Attack: <input id="attackControlID" class="checkbox" type="checkbox" checked> <input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"></td>
-                        <td class="menu">Font: <input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont()"></td>
-                        <td rowspan="2" class="menu"><button id="resetButtonID" class="button" type="button" onclick="reset()">Reset</button></td>
+                        <td rowspan="2" class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()">Start</button></td>
+                        <td class="menu right">Simpla <input id="simplaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this)"></td>
+                        <td class="menu right">Ultima <input id="ultimaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this)"></td>
+                        <td class="menu">Tempo <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed()"> <span class="light">1 slowest, 10 fastest</span></td>
+                        <td class="menu right">Attack <input id="attackControlID" class="checkbox" type="checkbox"> <input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"></td>
+                        <td class="menu">Font <input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont()"></td>
+                        <td rowspan="2" class="menu"><button id="resetButtonID" class="menu" type="button" onclick="reset()">Reset</button></td>
                       </tr>
                       <tr>
+                        <td class="menu right">Maxima <input id="maximaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this)"></td>
+                        <td class="menu right">VIP <input id="vipSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this)"></td>
                         <td class="menu"><div id="speedBlock"><div id="speedFill">&nbsp;</div></div></td>
-                        <td class="menu prefix">Defence: <input id="defenceControlID" class="checkbox" type="checkbox" checked> <input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"></td>
+                        <td class="menu right">Defence <input id="defenceControlID" class="checkbox" type="checkbox"> <input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"></td>
                         <td class="menu"><input id="fontWeightControlID" class="checkbox" type="checkbox" onclick="setFont()">bold <input id="fontStyleControlID" class="checkbox" type="checkbox" onclick="setFont()">italic</td>
                       </tr>
                     </table>
@@ -491,12 +533,30 @@ function main() {
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <p>Adjust the settings at the top bar as neccessary and press</p>
         <p><button id="bigStartButton" type="button" onclick="start()">Start!</button></p>
-        <p class="important">Click anywhere in the spell window to stop and return to this screen.</p>
+        <p class="bold">Click anywhere in the spell window to stop and return to this screen.</p>
         <p>When you see a spell written in <span class="example attack">attack colors</span> &ndash; cast it at your imaginary opponent.</p>
-        <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell is cast by your opponent at you, so cast the respective shield.</p>
-        <p>Start with a comfortable tempo, and then increase the pace as your casting speed improves.</p>
+        <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield:</p>
+        <table align="center" cellspacing="0" cellpadding="0">
+          <tr>
+            <td class="right">
+                  Impedimenta, Tarantallegra, Silencio: <span class="bold">Protego</span>
+              <br>Rictusempra, Incarcero, Mento Menores, Petrificus Totalus: <span class="bold">Defendo</span>
+              <br>Stupefy, Achelitus, Maledicero: <span class="bold">Enervate</span>
+              <br>Expelliarmus: <span class="bold">Para Bellum</span>
+            </td>
+            <td>&nbsp;&nbsp;&nbsp;</td>
+            <td>
+                  Incendio: <span class="bold">Deluvium</span>
+              <br>Deluvium: <span class="bold">Incendio</span>
+              <br>Tormencio: <span class="bold">Floridus</span>
+              <br>Conjunctivitus: <span class="bold">Sensus Videndi</span>
+            </td>
+          </tr>
+        </table>
+        <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.</p>
         <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
-        <p class="important">Good luck!</p>
+        <p class="bold">Good luck!</p>
+        <p><br><a href="http://validator.w3.org/check?uri=referer" title="Valid HTML 4.01 Transitional"><img class="valid" src="validhtml401.png" alt="Valid HTML 4.01 Transitional"></a> <a href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS 2.1"><img class="valid" src="validcss.gif" alt="Valid CSS 2.1"></a></p>
       </td>
       <td id="castBlock" class="invisible" onclick="stop()"></td>
     </tr>
