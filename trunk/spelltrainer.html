@@ -73,6 +73,7 @@ td.menu {
 	font-weight: bold;
 	vertical-align: middle;
 	white-space: nowrap;
+	padding-left: 1em;
 }
 
 input.menu {
@@ -186,6 +187,10 @@ img.logo {
 <style type="text/css">
 table.visible, td.visible {
 	display: block;
+}
+
+input.checkbox {
+	margin-left: -3px;
 }
 
 #bigStartButton {
@@ -422,7 +427,7 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.57</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.58</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -453,25 +458,13 @@ function main() {
                         <td rowspan="2" class="menu">
                           <button id="startButtonID" class="button" type="button" onclick="start()">Start</button>
                         </td>
-                        <td class="menu">
-                          Tempo:
+                        <td class="menu">Tempo:
                           <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed()">
                           <span class="light">1 slowest, 10 fastest</span>
                         </td>
-                        <td class="menu prefix">
-                          Attack:&nbsp;
+                        <td class="menu prefix">Attack:&nbsp;<input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>on<span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()">
                         </td>
-                        <td class="menu">
-                          <input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>on<span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()">
-                        </td>
-                        <td>
-                          <table cellspacing="0" cellpadding="0">
-                            <tr>
-                              <td class="menu prefix">Font:&nbsp;</td>
-                              <td class="menu"><input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont()"></td>
-                            </tr>
-                          </table>
-                        </td>
+                        <td class="menu">Font:&nbsp;<input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont()"></td>
                         <td rowspan="2" class="menu">
                           <button id="resetButtonID" class="button" type="button" onclick="reset()">Reset</button>
                         </td>
@@ -482,15 +475,11 @@ function main() {
                             <div id="speedFill">&nbsp;</div>
                           </div>
                         </td>
-                        <td class="menu prefix">
-                          Defence:&nbsp;
+                        <td class="menu prefix">Defence:&nbsp;<input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>on<span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()">
                         </td>
                         <td class="menu">
-                          <input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>on<span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()">
-                        </td>
-                        <td class="menu">
-                          <input id="fontWeightControlID" class="checkbox" type="checkbox" onchange="setFont()">bold
-                          <input id="fontStyleControlID" class="checkbox" type="checkbox" onchange="setFont()">italic
+                          <input id="fontWeightControlID" class="checkbox" type="checkbox" onclick="setFont()">bold
+                          <input id="fontStyleControlID" class="checkbox" type="checkbox" onclick="setFont()">italic
                         </td>
                       </tr>
                     </table>
