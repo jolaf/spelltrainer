@@ -82,6 +82,16 @@ input.menu {
 	text-align: right;
 }
 
+#speedBlock {
+	width: 200px;
+	height: 15px;
+	overflow: scroll;
+}
+
+#speedFill {
+	width: 1000px;
+}
+
 img.logo {
 	background-color: white;
 	border: 0;
@@ -165,9 +175,8 @@ var RULE_OF_N_SPELLS = 3;
 
 var DEFAULT_FONT_NAME = 'Verdana,Arial,Helvetica,sans-serif';
 var MIN_FONT_SIZE = 20;
-
-var spellDelay = 3000;
-var flashDelay = 100;
+var BASE_DELAY = 10000;
+var FLASH_DELAY = 100;
 
 var useSimpla = true;
 var useMaxima = true;
@@ -217,7 +226,7 @@ function castSpell() {
 
 function hideSpell() {
     body.className = 'flash';
-    timeout = setTimeout('castSpell()', flashDelay);
+    timeout = setTimeout('castSpell()', FLASH_DELAY);
 }
 
 function resize() {
@@ -278,17 +287,30 @@ function setColors() {
     doSetColors('.defence', 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
 }
 
+function setSpeed() {
+    debug('setSpeed');
+    speedSlider.scrollLeft = (speedSlider.scrollWidth - speedSlider.offsetWidth) * (speedControl.value - 1) / 9;
+}
+
+function adjustSpeed() {
+    debug('adjustSpeed');
+    speedControl.value = 1 + Math.round(speedSlider.scrollLeft * 9 / (speedSlider.scrollWidth - speedSlider.offsetWidth));
+    spellDelay = BASE_DELAY / speedControl.value;
+}
+
 function reset() {
     debug('reset');
+    fontFamilyControl.value = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
+    fontWeightControl.checked = 'on';
+    fontStyleControl.checked = null;
+    setFont();
     attackForegroundControl.value = 'green';
     attackBackgroundControl.value = 'black';
     defenceForegroundControl.value = 'white';
     defenceBackgroundControl.value = 'maroon';
     setColors();
-    fontFamilyControl.value = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
-    fontWeightControl.checked = 'on';
-    fontStyleControl.checked = null;
-    setFont();
+    speedControl.value = 3;
+    setSpeed();
 }
 
 function start() {
@@ -303,7 +325,7 @@ function start() {
     cast.innerHTML = 'Get ready!';
     body.onresize = onresize = resize;
     body.className = 'ready';
-    timeout = setTimeout('castSpell()', spellDelay);
+    timeout = setTimeout('hideSpell()', spellDelay);
 }
 
 function stop() {
@@ -339,6 +361,8 @@ function main() {
     attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
     attackBackgroundControl = document.getElementById('attackBackgroundControlID');
     attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
+    speedControl = document.getElementById('speedControlID');
+    speedSlider = document.getElementById('speedBlock');
     reset();
     body.className = 'welcome';
 }
@@ -349,7 +373,7 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.52</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.53</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -374,15 +398,18 @@ function main() {
             <td>
               <table cellspacing="0" cellpadding="0">
                 <tr>
-                  <td class="menu prefix">Font:</td>
+                  <td class="menu prefix">Font:&nbsp;</td>
                   <td class="menu"><input id="fontFamilyControlID" class="menu input" type="text" onchange="setFont()"></td>
-                  <td class="menu prefix">Attack:</td>
+                  <td class="menu prefix">Attack:&nbsp;</td>
                   <td class="menu">
                     <input id="attackForegroundControlID" class="menu input" type="text" onchange="setColors()">
                     <span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
                     on
                     <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
                     <input id="attackBackgroundControlID" class="menu input" type="text" onchange="setColors()">
+                  </td>
+                  <td class="menu">Speed:
+                    <input id="speedControlID" class="menu input" type="text" onchange="setSpeed()">
                   </td>
                 </tr>
                 <tr>
@@ -391,13 +418,18 @@ function main() {
                     <input id="fontWeightControlID" class="input" type="checkbox" onchange="setFont()">bold
                     <input id="fontStyleControlID" class="input" type="checkbox" onchange="setFont()">italic
                   </td>
-                  <td class="menu prefix">Defence:</td>
+                  <td class="menu prefix">Defence:&nbsp;</td>
                   <td class="menu">
                     <input id="defenceForegroundControlID" class="menu input" type="text" onchange="setColors()">
                     <span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
                     on
                     <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
                     <input id="defenceBackgroundControlID" class="menu input" type="text" onchange="setColors()">
+                  </td>
+                  <td class="menu">
+                    <div id="speedBlock" onscroll="adjustSpeed()">
+                      <div id="speedFill">&nbsp;</div>
+                    </div>
                   </td>
                 </tr>
               </table>
