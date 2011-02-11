@@ -51,6 +51,10 @@ p {
 	padding: 3px;
 }
 
+.light {
+	font-weight: normal;
+}
+
 table.visible {
 	display: table;
 }
@@ -67,6 +71,7 @@ td.menu {
 	color: black;
 	font-size: 70%;
 	font-weight: bold;
+	vertical-align: middle;
 	white-space: nowrap;
 }
 
@@ -77,6 +82,23 @@ input.menu {
 
 .input {
 	border: 1px inset gray;
+}
+
+input.input {
+	width: 4em;
+}
+
+input.checkbox {
+	border: 0;
+	margin: 0;
+}
+
+span.input {
+	padding: 1px;
+}
+
+#fontFamilyControlID {
+	width: 5em;
 }
 
 .prefix {
@@ -134,6 +156,10 @@ img.logo {
 	margin: 0;
 	padding: 0;
 	white-space: nowrap;
+}
+
+#speedControlID {
+	width: 2em;
 }
 
 #castBlock {
@@ -244,34 +270,15 @@ function hideSpell() {
     timeout = setTimeout('castSpell()', FLASH_DELAY);
 }
 
-function resize() {
-    debug('resize');
-    cast.style.fontSize = MIN_FONT_SIZE;
-    cast.style.fontSize = Math.floor(Math.min(cast.offsetHeight * 0.7, cast.offsetWidth * aspect)) + 'px';
+function setSpeed() {
+    debug('setSpeed');
+    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
 }
 
-function setFont() {
-    if (cast.className != 'visible') {
-        return;
-    }
-    debug('setFont');
-    var savedClass = body.className;
-    var savedContent = cast.innerHTML;
-    var spells = attackSpells.spells.concat(defenceSpells.spells);
-    body.className = 'flash';
-    cast.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
-    cast.style.fontWeight = fontWeightControl.checked ? 'bold' : 'normal';
-    cast.style.fontStyle = fontStyleControl.checked ? 'italic' : 'normal';
-    cast.innerHTML = '<span id="test"><\/span>';
-    var test = document.getElementById('test');
-    aspect = 1000;
-    for (var i = 0; test.innerHTML = spells[i]; i++) {
-        aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
-    }
-    aspect *= 0.7;
-    resize();
-    cast.innerHTML = savedContent;
-    body.className = savedClass;
+function adjustSpeed() {
+    debug('adjustSpeed');
+    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
+    spellDelay = BASE_DELAY / speedControl.value;
 }
 
 function getStyle(selector) {
@@ -302,30 +309,49 @@ function setColors() {
     doSetColors('.defence', 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
 }
 
-function setSpeed() {
-    debug('setSpeed');
-    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
+function resize() {
+    debug('resize');
+    cast.style.fontSize = MIN_FONT_SIZE;
+    cast.style.fontSize = Math.floor(Math.min(cast.offsetHeight * 0.7, cast.offsetWidth * aspect)) + 'px';
 }
 
-function adjustSpeed() {
-    debug('adjustSpeed');
-    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
-    spellDelay = BASE_DELAY / speedControl.value;
+function setFont() {
+    if (cast.className != 'visible') {
+        return;
+    }
+    debug('setFont');
+    var savedClass = body.className;
+    var savedContent = cast.innerHTML;
+    var spells = attackSpells.spells.concat(defenceSpells.spells);
+    body.className = 'flash';
+    cast.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
+    cast.style.fontWeight = fontWeightControl.checked ? 'bold' : 'normal';
+    cast.style.fontStyle = fontStyleControl.checked ? 'italic' : 'normal';
+    cast.innerHTML = '<span id="test"><\/span>';
+    var test = document.getElementById('test');
+    aspect = 1000;
+    for (var i = 0; test.innerHTML = spells[i]; i++) {
+        aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
+    }
+    aspect *= 0.7;
+    resize();
+    cast.innerHTML = savedContent;
+    body.className = savedClass;
 }
 
 function reset() {
     debug('reset');
-    fontFamilyControl.value = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
-    fontWeightControl.checked = 'on';
-    fontStyleControl.checked = null;
-    setFont();
+    speedControl.value = 3;
+    setSpeed();
     attackForegroundControl.value = 'green';
     attackBackgroundControl.value = 'black';
     defenceForegroundControl.value = 'white';
     defenceBackgroundControl.value = 'maroon';
     setColors();
-    speedControl.value = 3;
-    setSpeed();
+    fontFamilyControl.value = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
+    fontWeightControl.checked = 'on';
+    fontStyleControl.checked = null;
+    setFont();
 }
 
 function start() {
@@ -371,21 +397,21 @@ function main() {
     welcome = document.getElementById('welcomeBlock');
     startButton = document.getElementById('startButtonID');
     resetButton = document.getElementById('resetButtonID');
-    fontFamilyControl = document.getElementById('fontFamilyControlID');
-    fontWeightControl = document.getElementById('fontWeightControlID');
-    fontStyleControl = document.getElementById('fontStyleControlID');
-    defenceForegroundControl = document.getElementById('defenceForegroundControlID');
-    defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
-    defenceBackgroundControl = document.getElementById('defenceBackgroundControlID');
-    defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplayID');
-    attackForegroundControl = document.getElementById('attackForegroundControlID');
-    attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
-    attackBackgroundControl = document.getElementById('attackBackgroundControlID');
-    attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
     speedControl = document.getElementById('speedControlID');
     speedScroll = document.getElementById('speedBlock');
     speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
     speedScroll.onscroll = adjustSpeed;
+    attackForegroundControl = document.getElementById('attackForegroundControlID');
+    attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
+    attackBackgroundControl = document.getElementById('attackBackgroundControlID');
+    attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
+    defenceForegroundControl = document.getElementById('defenceForegroundControlID');
+    defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
+    defenceBackgroundControl = document.getElementById('defenceBackgroundControlID');
+    defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplayID');
+    fontFamilyControl = document.getElementById('fontFamilyControlID');
+    fontWeightControl = document.getElementById('fontWeightControlID');
+    fontStyleControl = document.getElementById('fontStyleControlID');
     reset();
     body.className = 'welcome';
 }
@@ -396,7 +422,7 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.56</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.57</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>]&nbsp;[<a href="http://code.google.com/p/spelltrainer/">Project page</a>]&nbsp;[<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -427,41 +453,44 @@ function main() {
                         <td rowspan="2" class="menu">
                           <button id="startButtonID" class="button" type="button" onclick="start()">Start</button>
                         </td>
-                        <td class="menu prefix">Font:&nbsp;</td>
-                        <td class="menu"><input id="fontFamilyControlID" class="menu input" type="text" onchange="setFont()"></td>
-                        <td class="menu prefix">Attack:&nbsp;</td>
                         <td class="menu">
-                          <input id="attackForegroundControlID" class="menu input" type="text" onchange="setColors()">
-                          <span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                          on
-                          <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                          <input id="attackBackgroundControlID" class="menu input" type="text" onchange="setColors()">
+                          Tempo:
+                          <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed()">
+                          <span class="light">1 slowest, 10 fastest</span>
                         </td>
-                        <td class="menu">Tempo:
-                          <input id="speedControlID" class="menu input" type="text" onchange="setSpeed()">
+                        <td class="menu prefix">
+                          Attack:&nbsp;
+                        </td>
+                        <td class="menu">
+                          <input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>on<span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()">
+                        </td>
+                        <td>
+                          <table cellspacing="0" cellpadding="0">
+                            <tr>
+                              <td class="menu prefix">Font:&nbsp;</td>
+                              <td class="menu"><input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont()"></td>
+                            </tr>
+                          </table>
                         </td>
                         <td rowspan="2" class="menu">
                           <button id="resetButtonID" class="button" type="button" onclick="reset()">Reset</button>
                         </td>
                       </tr>
                       <tr>
-                        <td></td>
-                        <td class="menu">
-                          <input id="fontWeightControlID" class="input" type="checkbox" onchange="setFont()">bold
-                          <input id="fontStyleControlID" class="input" type="checkbox" onchange="setFont()">italic
-                        </td>
-                        <td class="menu prefix">Defence:&nbsp;</td>
-                        <td class="menu">
-                          <input id="defenceForegroundControlID" class="menu input" type="text" onchange="setColors()">
-                          <span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                          on
-                          <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>
-                          <input id="defenceBackgroundControlID" class="menu input" type="text" onchange="setColors()">
-                        </td>
                         <td class="menu">
                           <div id="speedBlock">
                             <div id="speedFill">&nbsp;</div>
                           </div>
+                        </td>
+                        <td class="menu prefix">
+                          Defence:&nbsp;
+                        </td>
+                        <td class="menu">
+                          <input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span>on<span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()">
+                        </td>
+                        <td class="menu">
+                          <input id="fontWeightControlID" class="checkbox" type="checkbox" onchange="setFont()">bold
+                          <input id="fontStyleControlID" class="checkbox" type="checkbox" onchange="setFont()">italic
                         </td>
                       </tr>
                     </table>
