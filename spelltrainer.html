@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title></title>
+<title>SpellTrainer v0.61</title>
 <meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
@@ -79,7 +79,7 @@ td.menu {
 	font-size: 70%;
 	font-weight: bold;
 	color: black;
-	padding-left: 0.6em;
+	padding: 0 0.1em 0 0.5em;
 }
 
 button.menu {
@@ -111,7 +111,7 @@ input.checkbox {
 
 img.logo {
 	background-color: white;
-	border: 0;
+	border: 1px solid black;
 }
 
 img.valid {
@@ -128,12 +128,22 @@ img.valid {
 
 #headerTable {
 	width: 100%;
+	border: 1px solid black;
+}
+
+#logoBlock {
+	padding-left: 4px;
 }
 
 #headerTitle {
+	text-align: center;
 	color: black;
 	font-weight: bold;
-	white-space: nowrap;
+	padding: 0 0.2em 0 0.6em;
+}
+
+#menuPadding {
+	width: 100%;
 }
 
 #noscriptTitle, #welcomeTitle {
@@ -423,11 +433,6 @@ function main() {
     ultimaVip = arrayWithSuffix(simplaVip, 'Ultima');
     attackSpells = new SpellGenerator();
     defenceSpells = new SpellGenerator();
-    // Insert page title wherever appropriate
-    var title = document.getElementById('noscriptTitle').innerHTML;
-    document.title = title;
-    document.getElementById('headerTitle').innerHTML = title;
-    document.getElementById('welcomeTitle').innerHTML = title;
     // Show main page
     document.getElementById('loadingBlock').className = 'invisible';
     document.getElementById('mainBlock').className = 'visible';
@@ -473,7 +478,7 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.6</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.61</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -493,8 +498,9 @@ function main() {
       <td id="headerBlock">
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
-            <td><a href="http://code.google.com/p/spelltrainer/"><img class="logo" src="wand.png" alt=""></a></td>
-            <td id="headerTitle"></td>
+            <td id="logoBlock"><img class="logo" src="wand.png" alt=""></td>
+            <td id="headerTitle">SpellTrainer<br>v0.61</td>
+            <td id="menuPadding"></td>
             <td>
               <table align="right" cellspacing="0" cellpadding="0">
                 <tr>
@@ -527,7 +533,7 @@ function main() {
     </tr>
     <tr>
       <td id="welcomeBlock" class="visible">
-        <h1 id="welcomeTitle"></h1>
+        <h1 id="welcomeTitle">SpellTrainer v0.61</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
