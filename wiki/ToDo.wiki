@@ -14,7 +14,7 @@
   * Allow control of spells to use by spell and by group.
   * Include Transfiguration shields, Hooligan spells, anything else?
   * + Create publishing script.
-  * Create a fancy design.
+  * + Create a fancy design.
 
 = Thoughts =
 
