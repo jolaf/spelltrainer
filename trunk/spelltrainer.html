@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>SpellTrainer v0.66</title>
+<title>SpellTrainer v0.7</title>
 <meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
@@ -238,81 +238,78 @@ function debug(message) {
     logger.scrollTop = logger.scrollHeight;
 }
 
+function getStyle(selector) {
+    // Tries both ways to access CSS
+    var rules = document.styleSheets[0].cssRules || document.styleSheets[0].rules;
+    for (var i = 0, rule; rule = rules[i++];) {
+        if (rule.selectorText === selector) {
+            return rule.style;
+        }
+    }
+}
+
+function Parameter(control, defaultValue) {
+    this.control = control;
+    this.defaultValue = defaultValue;
+    this.isBoolean = (typeof this.defaultValue === 'boolean');
+    this.isNumber = (typeof this.defaultValue === 'number');
+
+    this.get = function() {
+        return (this.isBoolean ? this.control.checked : this.control.value);
+    }
+
+    this.set = function(value) {
+        if (this.isBoolean) {
+            this.control.checked = (value === true || value === 'true');
+        } else {
+            this.control.value = (this.isNumber ? parseInt(value) : value);
+        }
+    }
+}
+
 function saveConfig() {
     debug('saveConfig');
-    var cookie = '';
-    for (var field in config) {
-        if (config[field] != defaultConfig[field]) {
-            // ToDo: Change this to join(';')
-            cookie += escape(field) + '=' + escape(config[field]) + ';'
+    var items = [];
+    for (var name in config) {
+        var parameter = config[name];
+        var value = parameter.get();
+        if (value != parameter.defaultValue) {
+            items.push(escape(name) + '=' + escape(value));
         }
     }
     var date = new Date();
-    date.setTime(date.getTime() + (cookie ? 365 : -1) * 24 * 60 * 60 * 1000); // 1 year
-    document.cookie = COOKIE_NAME + '=' + escape(cookie) + '; expires=' + date.toGMTString() + '; path=' + document.location.pathname;
+    date.setTime(date.getTime() + (items ? 365 : -1) * 24 * 60 * 60 * 1000); // 1 year
+    document.cookie = COOKIE_NAME + '=' + escape(items.join(';')) + '; expires=' + date.toGMTString() + '; path=' + document.location.pathname;
 }
 
 function loadConfig(useCookie) {
     debug('loadConfig(' + useCookie + ')');
-    newConfig = {};
-    for (var field in defaultConfig) {
-        newConfig[field] = defaultConfig[field];
-    }
+    var fromCookie = {};
     if (useCookie) {
         var items = [];
         var lookFor = COOKIE_NAME + '=';
         var cookies = document.cookie.split(';');
         for (var i = 0; i < cookies.length; i++) {
-            cookie = cookies[i].split(' ').join('');
+            var cookie = cookies[i].split(' ').join('');
             if (cookie.indexOf(lookFor) == 0) {
-                items = unescape(cookie.substring(lookFor.length)).split(';').slice(0, -1);
+                items = unescape(cookie.substring(lookFor.length)).split(';');
                 break;
             }
         }
         for (var i = 0; i < items.length; i++) {
             var item = items[i].split('=');
             if (item.length == 2) {
-                var key = unescape(item[0].split(' ').join(''));
-                var value = unescape(item[1].split(' ').join(''));
-                switch (key) {
-                case 'simplaSpells':
-                case 'maximaSpells':
-                case 'ultimaSpells':
-                case 'vipSpells':
-                case 'attack':
-                case 'defence':
-                case 'fontBold':
-                case 'fontItalic':
-                    newConfig[key] = (value === 'true');
-                    break;
-                case 'speed':
-                    newConfig[key] = parseInt(value);
-                    break;
-                default:
-                    newConfig[key] = value;
-                }
+                fromCookie[unescape(item[0].split(' ').join(''))] = unescape(item[1].split(' ').join(''));
             }
         }
     }
-    config = newConfig;
-    simplaSpellControl.checked = config.simplaSpells;
-    maximaSpellControl.checked = config.maximaSpells;
-    ultimaSpellControl.checked = config.ultimaSpells;
-    vipSpellControl.checked = config.vipSpells;
-    speedControl.value = config.speed;
-    attackControl.checked = config.attack;
-    attackForegroundControl.value = config.attackForeground;
-    attackBackgroundControl.value = config.attackBackground;
-    defenceControl.checked = config.defence;
-    defenceForegroundControl.value = config.defenceForeground;
-    defenceBackgroundControl.value = config.defenceBackground;
-    fontFamilyControl.value = config.fontFamily;
-    fontWeightControl.checked = config.fontBold;
-    fontStyleControl.checked = config.fontItalic;
-    setSpeed();
-    setColors();
+    for (var name in config) {
+        var parameter = config[name];
+        parameter.set((name in fromCookie) ? fromCookie[name] : parameter.defaultValue);
+    }
     setSpells();
-    saveConfig();
+    setColors();
+    setSpeed(); // calls adjustSpeed() and saveConfig()
 }
 
 function SpellGenerator() {
@@ -337,29 +334,26 @@ function SpellGenerator() {
     }
 }
 
+function setMode(element) {
+    debug('setMode');
+    if (!attackControl.checked && !defenceControl.checked) {
+        (element || attackControl).checked = true;
+    }
+}
+
 function setSpells(element) {
-    // ToDo: save attack/defence checkbox values to config somewhere
     debug('setSpells');
     if (!simplaSpellControl.checked && !maximaSpellControl.checked && !ultimaSpellControl.checked) {
         (element || simplaSpellControl).checked = true;
     }
-    if (cast.className === 'visible') {
-        attackSpells.spells = defenceSpells.spells =
-            (simplaSpellControl.checked ? vipSpellControl.checked ? simpla.concat(simplaVip) : simpla : []).concat(
-            (maximaSpellControl.checked ? vipSpellControl.checked ? maxima.concat(maximaVip) : maxima : []),
-            (ultimaSpellControl.checked ? vipSpellControl.checked ? ultima.concat(ultimaVip) : ultima : []));
-        setFontNeeded = true;
+    if (cast.className !== 'visible') {
+        return;
     }
-    if (config.simplaSpells != simplaSpellControl.checked
-     || config.maximaSpells != maximaSpellControl.checked
-     || config.ultimaSpells != ultimaSpellControl.checked
-     || config.vipSpells != vipSpellControl.checked) {
-        config.simplaSpells = simplaSpellControl.checked;
-        config.maximaSpells = maximaSpellControl.checked;
-        config.ultimaSpells = ultimaSpellControl.checked;
-        config.vipSpells = vipSpellControl.checked;
-        saveConfig();
-    }
+    attackSpells.spells = defenceSpells.spells =
+        (simplaSpellControl.checked ? vipSpellControl.checked ? simpla.concat(simplaVip) : simpla : []).concat(
+        (maximaSpellControl.checked ? vipSpellControl.checked ? maxima.concat(maximaVip) : maxima : []),
+        (ultimaSpellControl.checked ? vipSpellControl.checked ? ultima.concat(ultimaVip) : ultima : []));
+    setFontNeeded = true;
 }
 
 function castSpell() {
@@ -383,46 +377,36 @@ function hideSpell() {
     }
 }
 
+function setColors() {
+    debug('setColors');
+    function doSetColors(style, field, display, control, defaultValue) {
+        try { // Throws exception on IE if color value is incorrect
+            style[field] = display.style.backgroundColor = control.value;
+        } catch(err) {
+            style[field] = display.style.backgroundColor = defaultValue;
+        }
+    }
+    doSetColors(attackStyle, 'color', attackForegroundDisplay, attackForegroundControl, 'gray');
+    doSetColors(attackStyle, 'backgroundColor', attackBackgroundDisplay, attackBackgroundControl, 'white');
+    doSetColors(defenceStyle, 'color', defenceForegroundDisplay, defenceForegroundControl, 'gray');
+    doSetColors(defenceStyle, 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
+}
+
 function setSpeed() {
     debug('setSpeed');
-    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
+    newScrollValue = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
+    if (newScrollValue != speedScroll.scrollLeft) {
+        speedScroll.scrollLeft = newScrollValue; // adjustSpeed() gets called, calls saveConfig()
+    } else if (!speedDelay) {
+        adjustSpeed(); // calls saveConfig()
+    }
 }
 
 function adjustSpeed() {
     debug('adjustSpeed');
     speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
     spellDelay = 10000 / speedControl.value;
-    if (config.speed != speedControl.value) {
-        config.speed = speedControl.value;
-        saveConfig();
-    }
-}
-
-function setColors() {
-    // ToDo: redesign to probably allow direct use of doSetColors(), update config
-    debug('setColors');
-    function doSetColors(selector, field, display, control, defaultValue) {
-        function getStyle(selector) {
-            var rules = document.styleSheets[0].cssRules;
-            if (!rules) {
-                rules = document.styleSheets[0].rules;
-            }
-            for (var i = 0, rule; rule = rules[i++];) {
-                if (rule.selectorText === selector) {
-                    return rule.style;
-                }
-            }
-        }
-        try {
-            getStyle(selector)[field] = display.style.backgroundColor = control.value;
-        } catch(err) {
-            getStyle(selector)[field] = display.style.backgroundColor = defaultValue;
-        }
-    }
-    doSetColors('.attack', 'color', attackForegroundDisplay, attackForegroundControl, 'gray');
-    doSetColors('.attack', 'backgroundColor', attackBackgroundDisplay, attackBackgroundControl, 'white');
-    doSetColors('.defence', 'color', defenceForegroundDisplay, defenceForegroundControl, 'gray');
-    doSetColors('.defence', 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
+    saveConfig();
 }
 
 function resize() {
@@ -432,36 +416,29 @@ function resize() {
 }
 
 function setFont() {
+    if (cast.className !== 'visible') {
+        return;
+    }
     debug('setFont');
-    if (cast.className === 'visible') {
-        setFontNeeded = false;
-        var savedClass = body.className;
-        var savedContent = cast.innerHTML;
-        var spells = attackSpells.spells.concat(defenceSpells.spells);
-        body.className = 'flash';
-        cast.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
-        cast.style.fontWeight = fontWeightControl.checked ? 'bold' : 'normal';
-        cast.style.fontStyle = fontStyleControl.checked ? 'italic' : 'normal';
-        cast.style.fontSize = MIN_FONT_SIZE;
-        cast.innerHTML = '<span id="test"><\/span>';
-        var test = document.getElementById('test');
-        aspect = 1000;
-        for (var i = 0; test.innerHTML = spells[i++];) {
-            aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
-        }
-        aspect *= 0.7;
-        resize();
-        cast.innerHTML = savedContent;
-        body.className = savedClass;
+    setFontNeeded = false;
+    var savedClass = body.className;
+    var savedContent = cast.innerHTML;
+    var spells = attackSpells.spells.concat(defenceSpells.spells);
+    body.className = 'flash';
+    cast.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
+    cast.style.fontWeight = fontWeightControl.checked ? 'bold' : 'normal';
+    cast.style.fontStyle = fontStyleControl.checked ? 'italic' : 'normal';
+    cast.style.fontSize = MIN_FONT_SIZE;
+    cast.innerHTML = '<span id="test"><\/span>';
+    var test = document.getElementById('test');
+    aspect = 1000;
+    for (var i = 0; test.innerHTML = spells[i++];) {
+        aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
     }
-    if (config.fontFamily != fontFamilyControl.value
-     || config.fontBold != fontWeightControl.checked
-     || config.fontItalic != fontStyleControl.checked) {
-        config.fontFamily = fontFamilyControl.value;
-        config.fontBold = fontWeightControl.checked;
-        config.fontItalic = fontStyleControl.checked;
-        saveConfig();
-    }
+    aspect *= 0.7;
+    resize();
+    cast.innerHTML = savedContent;
+    body.className = savedClass;
 }
 
 function start() {
@@ -512,22 +489,6 @@ function main() {
     ultimaVip = arrayWithSuffix(simplaVip, 'Ultima');
     attackSpells = new SpellGenerator();
     defenceSpells = new SpellGenerator();
-    // Create default config
-    defaultConfig = {}
-    defaultConfig.simplaSpells = true;
-    defaultConfig.maximaSpells = true;
-    defaultConfig.ultimaSpells = false;
-    defaultConfig.vipSpells = true;
-    defaultConfig.speed = 3;
-    defaultConfig.attack = true;
-    defaultConfig.attackForeground = 'green';
-    defaultConfig.attackBackground = 'black';
-    defaultConfig.defence = true;
-    defaultConfig.defenceForeground = 'white';
-    defaultConfig.defenceBackground = 'maroon';
-    defaultConfig.fontFamily = DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','));
-    defaultConfig.fontBold = true;
-    defaultConfig.fontItalic = false;
     // Show main page
     document.getElementById('loadingBlock').className = 'invisible';
     document.getElementById('mainBlock').className = 'visible';
@@ -543,17 +504,20 @@ function main() {
     ultimaSpellControl = document.getElementById('ultimaSpellControlID');
     vipSpellControl = document.getElementById('vipSpellControlID');
     // Speed controls
+    speedDelay = null;
     speedControl = document.getElementById('speedControlID');
     speedScroll = document.getElementById('speedBlock');
     speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
     speedScroll.onscroll = adjustSpeed;
     // Attack controls
+    attackStyle = getStyle('.attack');
     attackControl = document.getElementById('attackControlID');
     attackForegroundControl = document.getElementById('attackForegroundControlID');
     attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
     attackBackgroundControl = document.getElementById('attackBackgroundControlID');
     attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
     // Defence controls
+    defenceStyle = getStyle('.defence');
     defenceControl = document.getElementById('defenceControlID');
     defenceForegroundControl = document.getElementById('defenceForegroundControlID');
     defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
@@ -564,6 +528,22 @@ function main() {
     fontWeightControl = document.getElementById('fontWeightControlID');
     fontStyleControl = document.getElementById('fontStyleControlID');
     // Load initial configuration
+    config = {
+        simplaSpells: new Parameter(simplaSpellControl, true),
+        maximaSpells: new Parameter(maximaSpellControl, true),
+        ultimaSpells: new Parameter(ultimaSpellControl, false),
+        vipSpells: new Parameter(vipSpellControl, true),
+        speed: new Parameter(speedControl, 3),
+        attack: new Parameter(attackControl, true),
+        attackForeground: new Parameter(attackForegroundControl, 'green'),
+        attackBackground: new Parameter(attackBackgroundControl, 'black'),
+        defence: new Parameter(defenceControl, true),
+        defenceForeground: new Parameter(defenceForegroundControl, 'white'),
+        defenceBackground: new Parameter(defenceBackgroundControl, 'maroon'),
+        fontFamily: new Parameter(fontFamilyControl, DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','))),
+        fontBold: new Parameter(fontWeightControl, true),
+        fontItalic: new Parameter(fontStyleControl, false),
+    };
     loadConfig(true);
     body.className = 'welcome';
 }
@@ -573,7 +553,7 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.66</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.7</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -594,7 +574,7 @@ function main() {
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
             <td id="logoBlock"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer<br>v0.66</td>
+            <td id="headerTitle">SpellTrainer<br>v0.7</td>
             <td id="menuPadding"></td>
             <td>
               <table align="right" cellspacing="0" cellpadding="0">
@@ -603,19 +583,19 @@ function main() {
                     <table cellspacing="0" cellpadding="0">
                       <tr>
                         <td rowspan="2" class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()">Start</button></td>
-                        <td class="menu right">Simpla <input id="simplaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this)"></td>
-                        <td class="menu right">Ultima <input id="ultimaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this)"></td>
+                        <td class="menu right">Simpla <input id="simplaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()"></td>
+                        <td class="menu right">Ultima <input id="ultimaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()"></td>
                         <td class="menu">Tempo <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed()"> <span class="light">1 slowest, 10 fastest</span></td>
-                        <td class="menu right">Attack <input id="attackControlID" class="checkbox" type="checkbox"> <input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"></td>
-                        <td class="menu">Font <input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont()"></td>
+                        <td class="menu right">Attack <input id="attackControlID" class="checkbox" type="checkbox" onclick="setMode(this); saveConfig()"> <input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"></td>
+                        <td class="menu">Font <input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont(); saveConfig()"></td>
                         <td rowspan="2" class="menu"><button id="resetButtonID" class="menu" type="button" onclick="loadConfig(false)">Reset</button></td>
                       </tr>
                       <tr>
-                        <td class="menu right">Maxima <input id="maximaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this)"></td>
-                        <td class="menu right">VIP <input id="vipSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this)"></td>
+                        <td class="menu right">Maxima <input id="maximaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()"></td>
+                        <td class="menu right">VIP <input id="vipSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()"></td>
                         <td class="menu"><div id="speedBlock"><div id="speedFill">&nbsp;</div></div></td>
-                        <td class="menu right">Defence <input id="defenceControlID" class="checkbox" type="checkbox"> <input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors()"></td>
-                        <td class="menu"><input id="fontWeightControlID" class="checkbox" type="checkbox" onclick="setFont()">bold <input id="fontStyleControlID" class="checkbox" type="checkbox" onclick="setFont()">italic</td>
+                        <td class="menu right">Defence <input id="defenceControlID" class="checkbox" type="checkbox" onclick="setMode(this); saveConfig()"> <input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"></td>
+                        <td class="menu"><input id="fontWeightControlID" class="checkbox" type="checkbox" onclick="setFont(); saveConfig()">bold <input id="fontStyleControlID" class="checkbox" type="checkbox" onclick="setFont(); saveConfig()">italic</td>
                       </tr>
                     </table>
                   </td>
@@ -628,7 +608,7 @@ function main() {
     </tr>
     <tr>
       <td id="welcomeBlock" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer v0.66</h1>
+        <h1 id="welcomeTitle">SpellTrainer v0.7</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
