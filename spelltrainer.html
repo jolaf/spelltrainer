@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>SpellTrainer v0.71</title>
+<title>SpellTrainer v0.72</title>
 <meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
@@ -346,18 +346,22 @@ function setMode(element) {
 }
 
 function setSpells(element) {
-    debug('setSpells');
     if (!simplaSpellControl.checked && !maximaSpellControl.checked && !ultimaSpellControl.checked) {
-        (element || simplaSpellControl).checked = true;
+        if (element) {
+            element.checked = true;
+            return;
+        }
+        simplaSpellControl.checked = true;
     }
     if (cast.className !== 'visible') {
         return;
     }
+    debug('setSpells');
     attackSpells.spells = defenceSpells.spells =
         (simplaSpellControl.checked ? vipSpellControl.checked ? simpla.concat(simplaVip) : simpla : []).concat(
         (maximaSpellControl.checked ? vipSpellControl.checked ? maxima.concat(maximaVip) : maxima : []),
         (ultimaSpellControl.checked ? vipSpellControl.checked ? ultima.concat(ultimaVip) : ultima : []));
-    setFontNeeded = true;
+    setFont();
 }
 
 function castSpell() {
@@ -376,9 +380,6 @@ function castSpell() {
 function hideSpell() {
     body.className = 'flash';
     timeout = setTimeout('castSpell()', 100);
-    if (setFontNeeded) {
-        setFont();
-    }
 }
 
 function setColors() {
@@ -420,7 +421,6 @@ function setFont() {
         return;
     }
     debug('setFont');
-    setFontNeeded = false;
     var savedClass = body.className;
     var savedContent = cast.innerHTML;
     var spells = attackSpells.spells.concat(defenceSpells.spells);
@@ -449,7 +449,6 @@ function start() {
     welcome.className = 'invisible';
     cast.className = 'visible';
     setSpells();
-    setFont();
     cast.innerHTML = 'Get ready!';
     body.onresize = onresize = resize;
     body.className = 'ready';
@@ -553,7 +552,7 @@ function main() {
   <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.71</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.72</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
@@ -574,7 +573,7 @@ function main() {
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
             <td id="logoBlock"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer<br>v0.71</td>
+            <td id="headerTitle">SpellTrainer<br>v0.72</td>
             <td id="menuPadding"></td>
             <td>
               <table align="right" cellspacing="0" cellpadding="0">
@@ -619,7 +618,7 @@ function main() {
     </tr>
     <tr>
       <td id="welcomeBlock" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer v0.71</h1>
+        <h1 id="welcomeTitle">SpellTrainer v0.72</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
