@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>SpellTrainer v0.8</title>
+<title>SpellTrainer v0.81</title>
 <meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
@@ -269,13 +269,11 @@ var SPELLS = [[['', LEVELS, [
                    ['Para Bellum', [null, 4.2, null], true]
                  ]]]
                ]],
-               [[null, null, [
-                 ['Unforgivable', null, [
+               [['Unforgivable', null, [
                    ['Avada Kedavra', 1.1],
                    ['Crucio', 1.3, 'Interfere'],
                    ['Imperio', 1.2, 'Interfere']
-                 ]]]
-               ]]];
+               ]]]];
 
 function debug(message) {
     logger.innerHTML += new Date().toLocaleTimeString() + '&nbsp;&nbsp;' + message + '<br>';
@@ -283,8 +281,7 @@ function debug(message) {
 }
 
 function getStyle(selector) {
-    // Tries both ways to access CSS
-    var rules = document.styleSheets[0].cssRules || document.styleSheets[0].rules;
+    var rules = document.styleSheets[0].cssRules || document.styleSheets[0].rules; // Tries both ways to access CSS
     for (var i = 0, rule; rule = rules[i++];) {
         if (rule.selectorText === selector) {
             return rule.style;
@@ -407,34 +404,28 @@ function validateFactor(element) {
 }
 
 function setSpellControl(spell, value) {
-    if (!spell) {
-        return;
-    }
-    if (spell.control) {
-        spell.control.checked = value;
-    }
-    if (spell.inClass) {
-        for (var i = 0, s; s = spell.inClass[i++];) {
+    if (spell) {
+        if (spell.control) {
+            spell.control.checked = value;
+        }
+        for (var i = 0, s; s = spell.inCategory[i++];) {
             setSpellControl(s, value);
         }
     }
 }
 
-function setClassControl(spell, value) {
-    if (!spell || !spell.clas) {
-        return;
-    }
-    if (spell.clas.control && spell.clas.control.checked != value) {
+function setCategoryControl(spell, value) {
+    if (spell && spell.category && spell.category.control && spell.category.control.checked != value) {
         var needToggle = true;
-        for (var i = 0, s; s = spell.clas.inClass[i++];) {
+        for (var i = 0, s; s = spell.category.inCategory[i++];) {
             if (s.control && s.control.checked != value) {
                 needToggle = false;
                 break;
             }
         }
         if (needToggle) {
-            spell.clas.control.checked = value;
-            setClassControl(spell.clas, value);
+            spell.category.control.checked = value;
+            setCategoryControl(spell.category, value);
         }
     }
 }
@@ -443,7 +434,7 @@ function setSpells(element) {
     debug('setSpells');
     if (element) {
         setSpellControl(element.spell, element.checked);
-        setClassControl(element.spell, element.checked);
+        setCategoryControl(element.spell, element.checked);
     }
     if (castBlock.className !== 'visible') {
         return;
@@ -565,43 +556,44 @@ function stop() {
 allSpells = [];
 attackSpells = [];
 shieldSpells = [];
+spellCategories = [];
+spellsWithShields = [];
+spellsNeedingShields = [];
 spellsByLevel = [];
-spellClasses = [];
 for (var i = 0; i < LEVELS.length + 1; i++) {
     spellsByLevel.push([]);
 }
 
-function Spell(name, level, control, factor, shield, clas) {
+function Spell(name, control, factorControl, shield, category) {
     this.setShield = function(shield) {
-        this.shield = (shield == true || this.isClass ? null : shield ? shield : (this.clas && this.clas.isShield) ? this.clas : null);
-        if (typeof this.shield === 'object' && this.shield) {
+        this.shield = (shield == true || this.isCategory ? null : shield ? shield : (this.category && this.category.isShield) ? this.category : null);
+        if (this.shield && typeof this.shield === 'object') {
             if (!this.shield.isShield) {
                 this.shield.isShield = true;
                 shieldSpells.push(this.shield);
             }
             this.shield.attacks.push(this);
+            spellsWithShields.push(this);
         }
     }
     this.name = name;
-    this.level = level;
     this.control = control;
     if (control) {
         control.spell = this;
     }
-    this.factor = factor;
-    this.clas = clas;
-    this.isClass = (typeof shield === 'object');
-    this.isSpell = !this.isClass;
-    this.isAttack = Boolean(this.isSpell && control && clas && clas.clas);
-    this.isShield = Boolean(this.isSpell && (shield == true || !this.isAttack)); // can be also set to true on second pass
+    this.factorControl = factorControl;
+    this.category = category;
+    this.isCategory = (typeof shield === 'object');
+    this.isSpell = Boolean(factorControl);
+    this.isAttack = Boolean(this.isSpell && !this.isCategory && control);
+    this.isShield = Boolean(this.isSpell && !this.isAttack); // can be also set to true on second pass
     this.setShield(shield);
     this.attacks = [];
-    this.inClass = [];
-    spellsByLevel[level].push(this);
+    this.inCategory = [];
     if (this.isSpell) {
         allSpells.push(this);
     } else {
-        spellClasses.push(this);
+        spellCategories.push(this);
     }
     if (this.isAttack) {
         attackSpells.push(this);
@@ -609,54 +601,84 @@ function Spell(name, level, control, factor, shield, clas) {
     if (this.isShield) {
         shieldSpells.push(this);
     }
-    if (this.clas) {
-        clas.inClass.push(this);
+    if (this.category) {
+        category.inCategory.push(this);
     }
 }
 
-function createSpellBlock(table, data, clas) {
+function createSpellBlock(table, data, category) {
     var spellName = data[0];
     var factors = data[1];
-    var spells = data[2];
-    var columns = (((factors && typeof factors === 'object' && factors.length) || (clas && clas.length > 1)) ? LEVELS : ['']);
-    var hasLevel = false;
-    if (columns.length > 1 && factors) {
-        var found = 0;
+    var shield = data[2];
+    var columns = (((factors && typeof factors === 'object' && factors.length) || (category && category.length > 1)) ? LEVELS : ['']);
+    var hasLevel = !factors;
+    if (factors && columns.length > 1) {
+        var found = false;
         for (var i = 0, factor; factor = factors[i++];) {
             if (factor) { 
                 if (found) {
                     hasLevel = true;
                     break;
                 } else{
-                    found = 1;
+                    found = true;
                 }
             }
         }
     }
     var row = table.insertRow(-1);
-    var cell;
     var ret = [];
+    var cell;
+    var factor;
     for (var i = 0; i < columns.length; i++) {
         var column = columns[i];
+        factor = (factors && typeof factors === 'object' ? factors[i] : factors);
         cell = row.insertCell(-1);
         cell.className = 'menu';
-        cell.innerHTML = (spells != true && (!factors || typeof factors !== 'object' || factors[i])) ? '<input class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()">' : '';
-        var control = cell.firstChild;
+        var control = null;
+        if (shield != true && (!factors || factor)) {
+            cell.innerHTML = '<input class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()">';
+            control = cell.firstChild;
+        }
         cell = row.insertCell(-1);
         cell.className = 'menu';
-        var factor = null;
+        var factorControl = null;
         if (!spellName) {
             cell.innerHTML = column;
-        } else if (factors && (typeof factors !== 'object' || factors[i])) {
-            cell.innerHTML = '<input class="menu input" type="text" maxlength="4" onchange="validateFactor(this); saveConfig()" value="' + (typeof factors === 'object' ? factors[i] : factors) + '">';
-            factor = cell.firstChild;
+        } else if (factor) {
+            cell.innerHTML = '<input class="menu input" type="text" maxlength="4" onchange="validateFactor(this); saveConfig()" value="' + factor + '">';
+            factorControl = cell.firstChild;
         }
-        ret.push(control || factor ? new Spell(spellName + (column && hasLevel && (i || !spellName) ? (spellName ? ' ' : '') + column : ''), columns.length > 1 ? i + 1 : 0, control, factor, spells, clas ? clas[i] : null) : null);
+        if (control || factorControl) {
+            var fullSpellName = (!spellName ? column : (column && hasLevel && i) ? (spellName + ' ' + column) : spellName);
+            var fullShield = (typeof shield === 'string' && column && hasLevel && i) ? (shield + ' ' + column) : shield;
+            spell = new Spell(fullSpellName, control, factorControl, fullShield, category ? category[i] : null);
+            spellsByLevel[columns.length > 1 ? i + 1 : 0].push(spell);
+            if (typeof shield === 'string') {
+                spellsNeedingShields.push(spell);
+            }
+            ret.push(spell);
+        } else {
+            ret.push(null);
+        }
     }
-    cell = row.insertCell(-1);
-    cell.className = (typeof spells === 'object') ? 'menu' : 'light';
-    cell.innerHTML = data[0];
+    if (factor || columns.length > 1) {
+        cell = row.insertCell(-1);
+        cell.className = (typeof shield === 'object') ? 'menu' : 'light';
+    } else {
+        cell.colSpan = 2;
+    }
+    cell.innerHTML = spellName;
     return ret;
+}
+
+function createSpellSection(columnBlock, section, superSectionObjects) {
+    var sectionObjects = createSpellBlock(columnBlock, section, superSectionObjects);
+    var subSections = section[2];
+    if (subSections && typeof subSections === 'object') {
+        for (var i = 0, subSection; subSection = subSections[i++];) {
+            createSpellSection(columnBlock, subSection, sectionObjects);
+        }
+    }
 }
 
 function configureParameter(parameter, defaultValue) {
@@ -704,35 +726,26 @@ function main() {
     attackGenerator = new SpellGenerator();
     defenceGenerator = new SpellGenerator();
     // Configure spell selector
-    var cell;
     for (var i = 0, column; column = SPELLS[i++];) {
-        cell = spellSelector.insertCell(-1);
+        var cell = spellSelector.insertCell(-1);
         cell.style.verticalAlign = 'top';
         cell.innerHTML = NEW_TABLE;
         var columnBlock = spellSelector.lastChild.firstChild;
         for (var j = 0, section; section = column[j++];) {
-            sectionObjects = createSpellBlock(columnBlock, section);
-            for (var k = 0, clas; clas = section[2][k++];) {
-                classObjects = createSpellBlock(columnBlock, clas, sectionObjects);
-                if (clas[2]) {
-                    for (var l = 0, spell; spell = clas[2][l++];) {
-                        createSpellBlock(columnBlock, spell, classObjects);
-                    }
-                }
-            }
+            createSpellSection(columnBlock, section);
         }
     }
     // Link remaining shields
-    for (var i = 0, attackSpell; attackSpell = attackSpells[i++];) {
-        if (typeof attackSpell.shield === 'string') {
-            for (var j = 0, shieldSpell; shieldSpell = allSpells[j++];) {
-                if (shieldSpell.name == attackSpell.shield) {
-                    attackSpell.setShield(shieldSpell);
-                    break;
-                }
+    for (var i = 0, spell; spell = spellsNeedingShields[i++];) {
+        for (var j = 0, shieldSpell; shieldSpell = allSpells[j++];) {
+            if (shieldSpell.name == spell.shield) {
+                spell.setShield(shieldSpell);
+                break;
             }
         }
     }
+    delete allSpells;
+    delete spellsNeedingShields;
     // Create config
     config = {};
     configureParameter('speed', 3);
@@ -758,7 +771,7 @@ function main() {
   <table id="loadingBlockID" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer v0.8</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.81</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
@@ -780,7 +793,7 @@ function main() {
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer<br>v0.8</td>
+            <td id="headerTitle">SpellTrainer<br>v0.81</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
@@ -825,7 +838,7 @@ function main() {
     </tr>
     <tr>
       <td id="welcomeBlockID" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer v0.8</h1>
+        <h1 id="welcomeTitle">SpellTrainer v0.81</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
