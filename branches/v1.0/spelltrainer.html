@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>SpellTrainer v0.82</title>
+<title>SpellTrainer v0.83</title>
 <meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
@@ -74,7 +74,6 @@ td.visible {
 }
 
 td.menu {
-	vertical-align: middle;
 	white-space: nowrap;
 	font-size: 70%;
 	font-weight: bold;
@@ -82,14 +81,31 @@ td.menu {
 	padding: 0 2px;
 }
 
+td.column {
+	vertical-align: top;
+	padding: 2px 2px 5px 0px;
+}
+
+td.spell, td.category {
+	white-space: nowrap;
+	font-size: 60%;
+	color: black;
+	padding-left: 3px;
+}
+
+td.category {
+	font-weight: bold;
+	padding-top: 5px;
+}
+
 td.padleft {
 	padding-left: 6px;
 }
 
-button.menu {
+button.menu, button.select {
 	height: 42px;
 	font-weight: bold;
-	Zpadding: 10px 0; /* Opera hack */
+	line-height: normal;
 }
 
 .input {
@@ -190,7 +206,6 @@ img.valid {
 
 #castBlockID {
 	text-align: center;
-	vertical-align: middle;
 	font-weight: bold;
 }
 
@@ -206,6 +221,17 @@ img.valid {
 	height: 38px;
 	font-size: 50%;
 	overflow: auto;
+}
+
+@media all and (-webkit-min-device-pixel-ratio: 10000), not all and (-webkit-min-device-pixel-ratio: 0) {
+    button.menu { /* Opera hack */
+	padding-top: 11px;
+    }
+
+    button.select {
+	line-height: 1.3;
+	padding-top: 5px;
+    }
 }
 </style>
 <!--[if IE]>
@@ -240,39 +266,40 @@ var MIN_FONT_SIZE = 20;
 var RULE_OF_N_SPELLS = 3;
 var COOKIE_NAME = 'SpellTrainer';
 
-var SPELLS = [[['', LEVELS, [
-                 ['Protego', [1.0, 2.4, 7.7], [
-                   ['Impedimenta', [1.4, 2.8, 2.6]],
-                   ['Tarantallegra', [1.6, 3.2, 6.7]],
-                   ['Silencio', [1.1, 2.4, 4.6]]
-                 ]],
-                 ['Defendo', [1.2, 2.9, 6.1], [
-                   ['Rictusempra', [1.3, 1.8, 3.8]],
-                   ['Incarcero', [1.1, 2.4, 2.7]],
-                   ['Mento Menores', [3.3, 3.5, 1.6]],
-                   ['Petrificus Totalus', [null, 3.2, null]]
-                 ]],
-                 ['Enervate', [1.1, 2.4, 2.7], [
-                   ['Stupefy', [1.2, 2.4, 2.2]],
-                   ['Achelitus', [2.1, 3.0, 7.3]],
-                   ['Maledicero', [2.7, 4.7, 8.3]]
-                 ]],
-                 ['VIP', null, [
-                   ['Incendio', [2.3, 2.7, 5.5], 'Deluvium'],
-                   ['Deluvium', [2.6, 2.9, 5.8], 'Incendio'],
-                   ['Tormentio', [2.0, 3.1, 6.0], 'Floridus'],
-                   ['Floridus', [3.3, 4.1, 6.2], true],
-                   ['Conjunctivitus', [1.5, 2.5, 4.6], 'Sensus Videndi'],
-                   ['Sensus Videndi', [1.1, 2.5, 7.6], true],
-                   ['Expelliarmus', [null, 3.1, null], 'Para Bellum'],
-                   ['Para Bellum', [null, 4.2, null], true]
-                 ]]]
-               ]],
-               [['Unforgivable', null, [
-                   ['Avada Kedavra', 1.1],
-                   ['Crucio', 1.3, 'Interfere'],
-                   ['Imperio', 1.2, 'Interfere']
-               ]]]];
+var SPELLS = [
+    [['', LEVELS, [
+      ['Protego', [1.0, 2.4, 7.7], [
+        ['Impedimenta', [1.4, 2.8, 2.6]],
+        ['Tarantallegra', [1.6, 3.2, 6.7]],
+        ['Silencio', [1.1, 2.4, 4.6]]
+      ]],
+      ['Defendo', [1.2, 2.9, 6.1], [
+        ['Rictusempra', [1.3, 1.8, 3.8]],
+        ['Incarcero', [1.1, 2.4, 2.7]],
+        ['Mento Menores', [3.3, 3.5, 1.6]],
+        ['Petrificus Totalus', [null, 3.2, null]]
+      ]],
+      ['Enervate', [1.1, 2.4, 2.7], [
+        ['Stupefy', [1.2, 2.4, 2.2]],
+        ['Achelitus', [2.1, 3.0, 7.3]],
+        ['Maledicero', [2.7, 4.7, 8.3]]
+      ]],
+      ['VIP', null, [
+        ['Incendio', [2.3, 2.7, 5.5], 'Deluvium'],
+        ['Deluvium', [2.6, 2.9, 5.8], 'Incendio'],
+        ['Tormentio', [2.0, 3.1, 6.0], 'Floridus'],
+        ['Floridus', [3.3, 4.1, 6.2], true],
+        ['Conjunctivitus', [1.5, 2.5, 4.6], 'Sensus Videndi'],
+        ['Sensus Videndi', [1.1, 2.5, 7.6], true],
+        ['Expelliarmus', [null, 3.1, null], 'Para Bellum'],
+        ['Para Bellum', [null, 4.2, null], true]
+      ]]]
+    ]],
+    [['Unforgivable', null, [
+        ['Avada Kedavra', 1.1],
+        ['Crucio', 1.3, 'Interfere'],
+        ['Imperio', 1.2, 'Interfere']
+    ]]]];
 
 function debug(message) {
     logger.innerHTML += new Date().toLocaleTimeString() + '&nbsp;&nbsp;' + message + '<br>';
@@ -314,11 +341,12 @@ function toggleSelectionBlock() {
     debug('toggleSelectionBlock');
     if (selectionBlock.className === 'invisible') {
         selectionBlock.className = 'visible';
-        selectionButton.innerHTML = 'Select Spells<br>^ ^ ^';
+        selectionButton.innerHTML = 'Select Spells<br>&and; &and; &and;';
     } else {
         selectionBlock.className = 'invisible';
-        selectionButton.innerHTML = 'Select Spells<br>v v v';
+        selectionButton.innerHTML = 'Select Spells<br>&or; &or; &or;';
     }
+    setFont();
 }
 
 function setMode(element) {
@@ -380,6 +408,19 @@ function setCategoryControl(spell, value) {
 function setSpells(element) {
     debug('setSpells');
     if (element) {
+        if (!element.checked) {
+            var found = false;
+            for (var i = 0, spell; spell = attackSpells[i++];) {
+                 if (spell.control.checked && spell.category != element.spell && (!spell.category || spell.category.category != element.spell)) {
+                     found = true;
+                     break;
+                 }
+            }
+            if (!found) {
+                element.checked = true;
+                return;
+            }
+        }
         setSpellControl(element.spell, element.checked);
         setCategoryControl(element.spell, element.checked);
     }
@@ -471,7 +512,8 @@ function setFont() {
     castBlock.innerHTML = '<span id="test"><\/span>';
     var test = document.getElementById('test');
     aspect = 1000;
-    for (var i = 0; test.innerHTML = spells[i++];) {
+    for (var i = 0, spell; spell = spells[i++];) {
+        test.innerHTML = spell.name;
         aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
     }
     aspect *= 0.7;
@@ -639,6 +681,7 @@ function createSpellBlock(table, data, category) {
             }
         }
     }
+    var className = (typeof shield === 'object') ? 'category' : 'spell';
     var row = table.insertRow(-1);
     var ret = [];
     var cell;
@@ -647,14 +690,14 @@ function createSpellBlock(table, data, category) {
         var column = columns[i];
         factor = (factors && typeof factors === 'object' ? factors[i] : factors);
         cell = row.insertCell(-1);
-        cell.className = 'menu';
+        cell.className = className + ' padleft';
         var control = null;
         if (shield != true && (!factors || factor)) {
             cell.innerHTML = '<input class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()">';
             control = cell.firstChild;
         }
         cell = row.insertCell(-1);
-        cell.className = 'menu';
+        cell.className = className;
         var factorControl = null;
         if (!spellName) {
             cell.innerHTML = column;
@@ -683,7 +726,7 @@ function createSpellBlock(table, data, category) {
     }
     if (factor || columns.length > 1) {
         cell = row.insertCell(-1);
-        cell.className = (typeof shield === 'object') ? 'menu' : 'light';
+        cell.className = className;
     } else {
         cell.colSpan = 2;
     }
@@ -751,7 +794,7 @@ function main() {
     }
     for (var i = 0, column; column = SPELLS[i++];) {
         var cell = spellSelector.insertCell(-1);
-        cell.style.verticalAlign = 'top';
+        cell.className = 'column';
         cell.innerHTML = '<table cellspacing="0" cellpadding="0"><\/table>';
         var columnBlock = spellSelector.lastChild.firstChild;
         for (var j = 0, section; section = column[j++];) {
@@ -782,7 +825,7 @@ function main() {
   <table id="loadingBlockID" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer v0.82</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.83</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
@@ -804,8 +847,8 @@ function main() {
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer<br>v0.82</td>
-            <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
+            <td id="headerTitle">SpellTrainer<br>v0.83</td>
+            <td id="menuPadding" class="menu"><button id="selectionButtonID" class="select" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
               <table align="right" cellspacing="0" cellpadding="0">
@@ -849,7 +892,7 @@ function main() {
     </tr>
     <tr>
       <td id="welcomeBlockID" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer v0.82</h1>
+        <h1 id="welcomeTitle">SpellTrainer v0.83</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
@@ -858,25 +901,8 @@ function main() {
         <p><button id="bigStartButton" type="button" onclick="start()">Start!</button></p>
         <p class="bold">Click anywhere in the spell window to stop and return to this screen.</p>
         <p>When you see a spell written in <span class="example attack">attack colors</span> &ndash; cast it at your imaginary opponent.</p>
-        <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield:</p>
-        <table align="center" cellspacing="0" cellpadding="0">
-          <tr>
-            <td class="right">
-                  Impedimenta, Tarantallegra, Silencio: <span class="bold">Protego</span>
-              <br>Rictusempra, Incarcero, Mento Menores, Petrificus Totalus: <span class="bold">Defendo</span>
-              <br>Stupefy, Achelitus, Maledicero: <span class="bold">Enervate</span>
-              <br>Expelliarmus: <span class="bold">Para Bellum</span>
-            </td>
-            <td>&nbsp;&nbsp;&nbsp;</td>
-            <td>
-                  Incendio: <span class="bold">Deluvium</span>
-              <br>Deluvium: <span class="bold">Incendio</span>
-              <br>Tormentio: <span class="bold">Floridus</span>
-              <br>Conjunctivitus: <span class="bold">Sensus Videndi</span>
-            </td>
-          </tr>
-        </table>
-        <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.</p>
+        <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield.</p>
+        <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.<br>You may adjust tempo factors for individual spells to give yourself more or less time for those spells.</p>
         <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
         <p class="bold">Good luck!</p>
         <p><br><a href="http://validator.w3.org/check?uri=referer" title="Valid HTML 4.01 Transitional"><img class="valid" src="validhtml401.png" alt="Valid HTML 4.01 Transitional"></a> <a href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS 2.1"><img class="valid" src="validcss.gif" alt="Valid CSS 2.1"></a></p>
