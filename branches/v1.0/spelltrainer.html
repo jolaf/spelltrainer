@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>SpellTrainer v0.81</title>
+<title>SpellTrainer v0.82</title>
 <meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
@@ -203,7 +203,7 @@ img.valid {
 }
 
 #loggerBlockID {
-	height: 238px;
+	height: 38px;
 	font-size: 50%;
 	overflow: auto;
 }
@@ -235,7 +235,6 @@ span.input {
 <![endif]-->
 <script type="text/javascript">
 var LEVELS = ['Simpla', 'Maxima', 'Ultima'];
-var NEW_TABLE = '<table cellspacing="0" cellpadding="0"><\/table>';
 var DEFAULT_FONT_NAME = 'Verdana,Arial,Helvetica,sans-serif';
 var MIN_FONT_SIZE = 20;
 var RULE_OF_N_SPELLS = 3;
@@ -289,6 +288,224 @@ function getStyle(selector) {
     }
 }
 
+function SpellGenerator() {
+    this.spells = [];
+    this.previousSpells = [];
+    this.next = function() {
+        newSpell:
+        while (true) {
+            spell = this.spells[Math.floor(Math.random() * this.spells.length)];
+            baseIndex = spell.name.indexOf(' ');
+            baseSpell = baseIndex >= 0 ? spell.name.slice(0, baseIndex) : spell.name;
+            if (this.spells.length >= RULE_OF_N_SPELLS) {
+                for (var i = 0, previousSpell; previousSpell = this.previousSpells[i++];) {
+                    if (previousSpell === baseSpell) {
+                        continue newSpell;
+                    }
+                }
+            }
+            this.previousSpells = this.previousSpells.concat([baseSpell]).slice(-RULE_OF_N_SPELLS + 1);
+            return spell;
+        }
+    }
+}
+
+function toggleSelectionBlock() {
+    debug('toggleSelectionBlock');
+    if (selectionBlock.className === 'invisible') {
+        selectionBlock.className = 'visible';
+        selectionButton.innerHTML = 'Select Spells<br>^ ^ ^';
+    } else {
+        selectionBlock.className = 'invisible';
+        selectionButton.innerHTML = 'Select Spells<br>v v v';
+    }
+}
+
+function setMode(element) {
+    debug('setMode');
+    if (!attackControl.checked && !defenceControl.checked) {
+        (element || attackControl).checked = true;
+    }
+}
+
+function validateFactor(element) {
+    if (!element) {
+        return;
+    }
+    debug('validateFactor');
+    element.value = Math.round((parseFloat(element.value) || 1) * 10) / 10;
+}
+
+function setSpellControl(spell, value) {
+    if (spell) {
+        if (spell.control) {
+            spell.control.checked = value;
+        }
+        for (var i = 0, subSpell; subSpell = spell.inCategory[i++];) {
+            setSpellControl(subSpell, value);
+        }
+    }
+}
+
+function checkSpellControl(spell, value) {
+    if (!spell) {
+        return false;
+    }
+    if (!spell.control) {
+        return true;
+    }
+    if (spell.control.checked !== value) {
+        return false;
+    }
+    for (var i = 0, subSpell; subSpell = spell.inCategory[i++];) {
+        if (!checkSpellControl(subSpell, value)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function setCategoryControl(spell, value) {
+    if (spell && spell.category && spell.category.control) {
+        for (var i = 0, subSpell; subSpell = spell.category.inCategory[i++];) {
+            if (!checkSpellControl(subSpell, value)) {
+                return;
+            }
+        }
+        spell.category.control.checked = value;
+        setCategoryControl(spell.category, value);
+    }
+}
+
+function setSpells(element) {
+    debug('setSpells');
+    if (element) {
+        setSpellControl(element.spell, element.checked);
+        setCategoryControl(element.spell, element.checked);
+    }
+    if (castBlock.className !== 'visible') {
+        return;
+    }
+    attackGenerator.spells = [];
+    defenceGenerator.spells = [];
+    for (var i = 0, spell; spell = attackSpells[i++];) {
+        if (spell.control.checked) {
+            attackGenerator.spells.push(spell);
+            if (spell.shield) {
+                defenceGenerator.spells.push(spell);
+            }
+        }
+    }
+    setFont();
+}
+
+function castSpell() {
+    var spell, delay;
+    if (attackControl.checked && (!defenceControl.checked || Math.random() >= 0.5)) {
+        body.className = 'attack';
+        spell = attackGenerator.next();
+        delay = spellDelay * spell.factorControl.value;
+        debug('Attack: ' + spell.name + ' (' + delay / 1000 + ')');
+    } else {
+        body.className = 'defence';
+        spell = defenceGenerator.next();
+        delay = spellDelay * spell.shield.factorControl.value;
+        debug('Defence: ' + spell.name + ' / ' + spell.shield.name + ' (' + delay / 1000 + ')');
+    }
+    castBlock.innerHTML = spell.name;
+    timeout = setTimeout('hideSpell()', delay);
+}
+
+function hideSpell() {
+    body.className = 'flash';
+    timeout = setTimeout('castSpell()', 100);
+}
+
+function setColors() {
+    debug('setColors');
+    function doSetColors(style, field, display, control, defaultValue) {
+        try { // Throws exception on IE if color value is incorrect
+            style[field] = display.style.backgroundColor = control.value;
+        } catch(err) {
+            style[field] = display.style.backgroundColor = defaultValue;
+        }
+    }
+    doSetColors(attackStyle, 'color', attackForegroundDisplay, attackForegroundControl, 'gray');
+    doSetColors(attackStyle, 'backgroundColor', attackBackgroundDisplay, attackBackgroundControl, 'white');
+    doSetColors(defenceStyle, 'color', defenceForegroundDisplay, defenceForegroundControl, 'gray');
+    doSetColors(defenceStyle, 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
+}
+
+function setSpeed() {
+    debug('setSpeed');
+    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
+    adjustSpeed(); // calls saveConfig(), we must be sure it's called
+}
+
+function adjustSpeed() {
+    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
+    debug('adjustSpeed ' + speedControl.value);
+    spellDelay = 3000 / speedControl.value;
+    saveConfig();
+}
+
+function resize() {
+    debug('resize');
+    castBlock.style.fontSize = MIN_FONT_SIZE;
+    castBlock.style.fontSize = Math.floor(Math.min(castBlock.offsetHeight * 0.7, castBlock.offsetWidth * aspect)) + 'px';
+}
+
+function setFont() {
+    if (castBlock.className !== 'visible') {
+        return;
+    }
+    debug('setFont');
+    var savedClass = body.className;
+    var savedContent = castBlock.innerHTML;
+    var spells = attackGenerator.spells.concat(defenceGenerator.spells);
+    body.className = 'flash';
+    castBlock.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
+    castBlock.style.fontWeight = fontBoldControl.checked ? 'bold' : 'normal';
+    castBlock.style.fontStyle = fontItalicControl.checked ? 'italic' : 'normal';
+    castBlock.style.fontSize = MIN_FONT_SIZE;
+    castBlock.innerHTML = '<span id="test"><\/span>';
+    var test = document.getElementById('test');
+    aspect = 1000;
+    for (var i = 0; test.innerHTML = spells[i++];) {
+        aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
+    }
+    aspect *= 0.7;
+    resize();
+    castBlock.innerHTML = savedContent;
+    body.className = savedClass;
+}
+
+function start() {
+    debug('start');
+    startButton.innerHTML = 'Stop';
+    startButton.onclick = stop;
+    body.className = 'flash';
+    welcomeBlock.className = 'invisible';
+    castBlock.className = 'visible';
+    setSpells();
+    castBlock.innerHTML = 'Get ready!';
+    body.onresize = onresize = resize;
+    body.className = 'ready';
+    timeout = setTimeout('hideSpell()', spellDelay);
+}
+
+function stop() {
+    debug('stop');
+    clearTimeout(timeout);
+    startButton.innerHTML = 'Start!';
+    startButton.onclick = start;
+    body.className = 'flash';
+    castBlock.className = 'invisible';
+    welcomeBlock.className = 'visible';
+    body.className = 'welcome';
+    body.onresize = onresize = null;
+}
+
 function Parameter(control, defaultValue) {
     this.control = control;
     this.defaultValue = defaultValue;
@@ -308,6 +525,12 @@ function Parameter(control, defaultValue) {
             this.control.value = (this.isInteger ? parseInt(value) : this.isFloat ? parseFloat(value) : value);
         }
     }
+}
+
+function configureParameter(parameter, defaultValue) {
+    var control = document.getElementById(parameter + 'ControlID');
+    config[parameter] = new Parameter(control, defaultValue);
+    return this[parameter + 'Control'] = control; // add to global namespace
 }
 
 function saveConfig() {
@@ -353,215 +576,6 @@ function loadConfig(useCookie) {
     setSpells();
     setColors();
     setSpeed(); // calls adjustSpeed() and saveConfig()
-}
-
-function SpellGenerator() {
-    this.spells = [];
-    this.previousSpells = [];
-    this.next = function() {
-        newSpell:
-        while (true) {
-            spell = this.spells[Math.floor(Math.random() * this.spells.length)];
-            baseIndex = spell.indexOf(' ');
-            baseSpell = baseIndex >= 0 ? spell.slice(0, baseIndex) : spell;
-            if (this.spells.length >= RULE_OF_N_SPELLS) {
-                for (var i = 0, previousSpell; previousSpell = this.previousSpells[i++];) {
-                    if (previousSpell === baseSpell) {
-                        continue newSpell;
-                    }
-                }
-            }
-            this.previousSpells = this.previousSpells.concat([baseSpell]).slice(-RULE_OF_N_SPELLS + 1);
-            return spell;
-        }
-    }
-}
-
-function toggleSelectionBlock() {
-    debug('toggleSelectionBlock');
-    if (selectionBlock.className === 'invisible') {
-        selectionBlock.className = 'visible';
-        selectionButton.innerHTML = 'Select Spells<br>^ ^ ^';
-    } else {
-        selectionBlock.className = 'invisible';
-        selectionButton.innerHTML = 'Select Spells<br>v v v';
-    }
-}
-
-function setMode(element) {
-    debug('setMode');
-    if (!attackControl.checked && !defenceControl.checked) {
-        (element || attackControl).checked = true;
-    }
-}
-
-function validateFactor(element) {
-    if (!element) {
-        return;
-    }
-    debug('validateFactor');
-    element.value = Math.round((parseFloat(element.value) || 1) * 10)/ 10;
-}
-
-function setSpellControl(spell, value) {
-    if (spell) {
-        if (spell.control) {
-            spell.control.checked = value;
-        }
-        for (var i = 0, s; s = spell.inCategory[i++];) {
-            setSpellControl(s, value);
-        }
-    }
-}
-
-function setCategoryControl(spell, value) {
-    if (spell && spell.category && spell.category.control && spell.category.control.checked != value) {
-        var needToggle = true;
-        for (var i = 0, s; s = spell.category.inCategory[i++];) {
-            if (s.control && s.control.checked != value) {
-                needToggle = false;
-                break;
-            }
-        }
-        if (needToggle) {
-            spell.category.control.checked = value;
-            setCategoryControl(spell.category, value);
-        }
-    }
-}
-
-function setSpells(element) {
-    debug('setSpells');
-    if (element) {
-        setSpellControl(element.spell, element.checked);
-        setCategoryControl(element.spell, element.checked);
-    }
-    if (castBlock.className !== 'visible') {
-        return;
-    }
-    attackGenerator.spells = defenceGenerator.spells =
-        (simplaSpellControl.checked ? vipSpellControl.checked ? simpla.concat(simplaVip) : simpla : []).concat(
-        (maximaSpellControl.checked ? vipSpellControl.checked ? maxima.concat(maximaVip) : maxima : []),
-        (ultimaSpellControl.checked ? vipSpellControl.checked ? ultima.concat(ultimaVip) : ultima : []));
-    setFont();
-}
-
-function castSpell() {
-    if (attackControl.checked && (!defenceControl.checked || Math.random() >= 0.5)) {
-        var spell = attackGenerator.next();
-        var spellFactor = config[getSpellControlName(spell, true)].get();
-        castBlock.innerHTML = spell;
-        body.className = 'attack';
-        debug('Attack: ' + spell);
-    } else {
-        var spell = defenceGenerator.next();
-        var spellFactor = config[getSpellControlName(getShield(spell), true)].get();
-        castBlock.innerHTML = spell;
-        body.className = 'defence';
-        debug('Defence: ' + spell);
-    }
-    timeout = setTimeout('hideSpell()', spellDelay * spellFactor);
-}
-
-function hideSpell() {
-    body.className = 'flash';
-    timeout = setTimeout('castSpell()', 100);
-}
-
-function setColors() {
-    debug('setColors');
-    function doSetColors(style, field, display, control, defaultValue) {
-        try { // Throws exception on IE if color value is incorrect
-            style[field] = display.style.backgroundColor = control.value;
-        } catch(err) {
-            style[field] = display.style.backgroundColor = defaultValue;
-        }
-    }
-    doSetColors(attackStyle, 'color', attackForegroundDisplay, attackForegroundControl, 'gray');
-    doSetColors(attackStyle, 'backgroundColor', attackBackgroundDisplay, attackBackgroundControl, 'white');
-    doSetColors(defenceStyle, 'color', defenceForegroundDisplay, defenceForegroundControl, 'gray');
-    doSetColors(defenceStyle, 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
-}
-
-function setSpeed() {
-    debug('setSpeed');
-    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1)/ 9;
-    adjustSpeed(); // calls saveConfig(), we must be sure it's called
-}
-
-function adjustSpeed() {
-    debug('adjustSpeed');
-    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9/ (speedScroll.scrollWidth - speedScroll.offsetWidth));
-    spellDelay = 10000/ speedControl.value;
-    saveConfig();
-}
-
-function resize() {
-    debug('resize');
-    castBlock.style.fontSize = MIN_FONT_SIZE;
-    castBlock.style.fontSize = Math.floor(Math.min(castBlock.offsetHeight * 0.7, castBlock.offsetWidth * aspect)) + 'px';
-}
-
-function setFont() {
-    if (castBlock.className !== 'visible') {
-        return;
-    }
-    debug('setFont');
-    var savedClass = body.className;
-    var savedContent = castBlock.innerHTML;
-    var spells = attackGenerator.spells.concat(defenceGenerator.spells);
-    body.className = 'flash';
-    castBlock.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
-    castBlock.style.fontWeight = fontWeightControl.checked ? 'bold' : 'normal';
-    castBlock.style.fontStyle = fontStyleControl.checked ? 'italic' : 'normal';
-    castBlock.style.fontSize = MIN_FONT_SIZE;
-    castBlock.innerHTML = '<span id="test"><\/span>';
-    var test = document.getElementById('test');
-    aspect = 1000;
-    for (var i = 0; test.innerHTML = spells[i++];) {
-        aspect = Math.min(aspect, test.offsetHeight/ test.offsetWidth);
-    }
-    aspect *= 0.7;
-    resize();
-    castBlock.innerHTML = savedContent;
-    body.className = savedClass;
-}
-
-function start() {
-    debug('start');
-    startButton.innerHTML = 'Stop';
-    startButton.onclick = stop;
-    body.className = 'flash';
-    welcomeBlock.className = 'invisible';
-    castBlock.className = 'visible';
-    setSpells();
-    castBlock.innerHTML = 'Get ready!';
-    body.onresize = onresize = resize;
-    body.className = 'ready';
-    timeout = setTimeout('hideSpell()', spellDelay);
-}
-
-function stop() {
-    debug('stop');
-    clearTimeout(timeout);
-    startButton.innerHTML = 'Start!';
-    startButton.onclick = start;
-    body.className = 'flash';
-    castBlock.className = 'invisible';
-    welcomeBlock.className = 'visible';
-    body.className = 'welcome';
-    body.onresize = onresize = null;
-}
-
-allSpells = [];
-attackSpells = [];
-shieldSpells = [];
-spellCategories = [];
-spellsWithShields = [];
-spellsNeedingShields = [];
-spellsByLevel = [];
-for (var i = 0; i < LEVELS.length + 1; i++) {
-    spellsByLevel.push([]);
 }
 
 function Spell(name, control, factorControl, shield, category) {
@@ -645,12 +659,18 @@ function createSpellBlock(table, data, category) {
         if (!spellName) {
             cell.innerHTML = column;
         } else if (factor) {
-            cell.innerHTML = '<input class="menu input" type="text" maxlength="4" onchange="validateFactor(this); saveConfig()" value="' + factor + '">';
+            cell.innerHTML = '<input class="menu input" type="text" maxlength="4" onchange="validateFactor(this); saveConfig()">';
             factorControl = cell.firstChild;
         }
         if (control || factorControl) {
             var fullSpellName = (!spellName ? column : (column && hasLevel && i) ? (spellName + ' ' + column) : spellName);
             var fullShield = (typeof shield === 'string' && column && hasLevel && i) ? (shield + ' ' + column) : shield;
+            if (control) {
+                config[fullSpellName] = new Parameter(control, columns.length > 1 && i < 2);
+            }
+            if (factorControl) {
+                config[fullSpellName + ' Factor'] = new Parameter(factorControl, factor);
+            }
             spell = new Spell(fullSpellName, control, factorControl, fullShield, category ? category[i] : null);
             spellsByLevel[columns.length > 1 ? i + 1 : 0].push(spell);
             if (typeof shield === 'string') {
@@ -681,25 +701,6 @@ function createSpellSection(columnBlock, section, superSectionObjects) {
     }
 }
 
-function configureParameter(parameter, defaultValue) {
-    var control = document.getElementById(parameter + 'ControlID');
-    config[parameter] = new Parameter(control, defaultValue);
-    return this[parameter + 'Control'] = control; // add to global namespace
-}
-
-function configureSpell(spell, factor, enabled, section, shield) {
-    if (!this[controlName + 'FactorControl']) {
-        preConfigureSpell(controlName, section, shield == true);
-        if (shield != true) {
-            configureParameter(controlName, enabled);
-        }
-        configureParameter(controlName + 'Factor', factor);
-        if (shield) {
-            configureSpell(shield);
-        }
-    }
-}
-
 function main() {
     logger = document.getElementById('loggerBlockID');
     debug('main');
@@ -725,11 +726,33 @@ function main() {
     toggleSelectionBlock();
     attackGenerator = new SpellGenerator();
     defenceGenerator = new SpellGenerator();
+    // Create config
+    config = {};
+    configureParameter('speed', 3);
+    configureParameter('attack', true);
+    configureParameter('defence', true);
+    configureParameter('attackForeground', 'green');
+    configureParameter('attackBackground', 'black');
+    configureParameter('defenceForeground', 'white');
+    configureParameter('defenceBackground', 'maroon');
+    configureParameter('fontFamily', DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(',')));
+    configureParameter('fontBold', true);
+    configureParameter('fontItalic', false);
     // Configure spell selector
+    allSpells = [];
+    attackSpells = [];
+    shieldSpells = [];
+    spellCategories = [];
+    spellsWithShields = [];
+    spellsNeedingShields = [];
+    spellsByLevel = [];
+    for (var i = 0; i < LEVELS.length + 1; i++) {
+        spellsByLevel.push([]);
+    }
     for (var i = 0, column; column = SPELLS[i++];) {
         var cell = spellSelector.insertCell(-1);
         cell.style.verticalAlign = 'top';
-        cell.innerHTML = NEW_TABLE;
+        cell.innerHTML = '<table cellspacing="0" cellpadding="0"><\/table>';
         var columnBlock = spellSelector.lastChild.firstChild;
         for (var j = 0, section; section = column[j++];) {
             createSpellSection(columnBlock, section);
@@ -746,24 +769,12 @@ function main() {
     }
     delete allSpells;
     delete spellsNeedingShields;
-    // Create config
-    config = {};
-    configureParameter('speed', 3);
-    configureParameter('attack', true);
-    configureParameter('defence', true);
-    configureParameter('attackForeground', 'green');
-    configureParameter('attackBackground', 'black');
-    configureParameter('defenceForeground', 'white');
-    configureParameter('defenceBackground', 'maroon');
-    configureParameter('fontFamily', DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(',')));
-    configureParameter('fontBold', true);
-    configureParameter('fontItalic', false);
-    loadConfig(true);
     // Show main page
     document.getElementById('loadingBlockID').className = 'invisible';
     document.getElementById('mainBlockID').className = 'visible';
     speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
     speedScroll.onscroll = adjustSpeed;
+    loadConfig(true);
 }
 </script>
 </head>
@@ -771,7 +782,7 @@ function main() {
   <table id="loadingBlockID" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer v0.81</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.82</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
@@ -793,7 +804,7 @@ function main() {
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer<br>v0.81</td>
+            <td id="headerTitle">SpellTrainer<br>v0.82</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
@@ -838,7 +849,7 @@ function main() {
     </tr>
     <tr>
       <td id="welcomeBlockID" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer v0.81</h1>
+        <h1 id="welcomeTitle">SpellTrainer v0.82</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
