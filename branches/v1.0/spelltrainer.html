@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>SpellTrainer v0.83</title>
+<title>SpellTrainer v0.84</title>
 <meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
@@ -102,7 +102,7 @@ td.padleft {
 	padding-left: 6px;
 }
 
-button.menu, button.select {
+button.menu {
 	height: 42px;
 	font-weight: bold;
 	line-height: normal;
@@ -174,7 +174,7 @@ img.valid {
 	white-space: nowrap;
 }
 
-#loadingBlockID, #mainBlockID {
+#loadingBlockID, #mainBlockID, #infoBlockID, #welcomeBlockID, #castBlockID {
 	width: 100%;
 	height: 100%;
 }
@@ -221,17 +221,6 @@ img.valid {
 	height: 38px;
 	font-size: 50%;
 	overflow: auto;
-}
-
-@media all and (-webkit-min-device-pixel-ratio: 10000), not all and (-webkit-min-device-pixel-ratio: 0) {
-    button.menu { /* Opera hack */
-	padding-top: 11px;
-    }
-
-    button.select {
-	line-height: 1.3;
-	padding-top: 5px;
-    }
 }
 </style>
 <!--[if IE]>
@@ -341,10 +330,10 @@ function toggleSelectionBlock() {
     debug('toggleSelectionBlock');
     if (selectionBlock.className === 'invisible') {
         selectionBlock.className = 'visible';
-        selectionButton.innerHTML = 'Select Spells<br>&and; &and; &and;';
+        selectionButton.innerHTML = 'Select Spells<br>&uarr; &uarr; &uarr;';
     } else {
         selectionBlock.className = 'invisible';
-        selectionButton.innerHTML = 'Select Spells<br>&or; &or; &or;';
+        selectionButton.innerHTML = 'Select Spells<br>&darr; &darr; &darr;';
     }
     setFont();
 }
@@ -424,7 +413,7 @@ function setSpells(element) {
         setSpellControl(element.spell, element.checked);
         setCategoryControl(element.spell, element.checked);
     }
-    if (castBlock.className !== 'visible') {
+    if (castBlock.className === 'invisible') {
         return;
     }
     attackGenerator.spells = [];
@@ -443,12 +432,12 @@ function setSpells(element) {
 function castSpell() {
     var spell, delay;
     if (attackControl.checked && (!defenceControl.checked || Math.random() >= 0.5)) {
-        body.className = 'attack';
+        castBlock.className = 'attack';
         spell = attackGenerator.next();
         delay = spellDelay * spell.factorControl.value;
         debug('Attack: ' + spell.name + ' (' + delay / 1000 + ')');
     } else {
-        body.className = 'defence';
+        castBlock.className = 'defence';
         spell = defenceGenerator.next();
         delay = spellDelay * spell.shield.factorControl.value;
         debug('Defence: ' + spell.name + ' / ' + spell.shield.name + ' (' + delay / 1000 + ')');
@@ -458,7 +447,7 @@ function castSpell() {
 }
 
 function hideSpell() {
-    body.className = 'flash';
+    castBlock.className = 'flash';
     timeout = setTimeout('castSpell()', 100);
 }
 
@@ -497,14 +486,14 @@ function resize() {
 }
 
 function setFont() {
-    if (castBlock.className !== 'visible') {
+    if (castBlock.className === 'invisible') {
         return;
     }
     debug('setFont');
-    var savedClass = body.className;
+    var savedClass = castBlock.className;
     var savedContent = castBlock.innerHTML;
     var spells = attackGenerator.spells.concat(defenceGenerator.spells);
-    body.className = 'flash';
+    castBlock.className = 'flash';
     castBlock.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
     castBlock.style.fontWeight = fontBoldControl.checked ? 'bold' : 'normal';
     castBlock.style.fontStyle = fontItalicControl.checked ? 'italic' : 'normal';
@@ -519,20 +508,19 @@ function setFont() {
     aspect *= 0.7;
     resize();
     castBlock.innerHTML = savedContent;
-    body.className = savedClass;
+    castBlock.className = savedClass;
 }
 
 function start() {
     debug('start');
     startButton.innerHTML = 'Stop';
     startButton.onclick = stop;
-    body.className = 'flash';
     welcomeBlock.className = 'invisible';
-    castBlock.className = 'visible';
+    castBlock.className = 'flash';
     setSpells();
     castBlock.innerHTML = 'Get ready!';
     body.onresize = onresize = resize;
-    body.className = 'ready';
+    castBlock.className = 'ready';
     timeout = setTimeout('hideSpell()', spellDelay);
 }
 
@@ -541,10 +529,8 @@ function stop() {
     clearTimeout(timeout);
     startButton.innerHTML = 'Start!';
     startButton.onclick = start;
-    body.className = 'flash';
-    castBlock.className = 'invisible';
     welcomeBlock.className = 'visible';
-    body.className = 'welcome';
+    castBlock.className = 'invisible';
     body.onresize = onresize = null;
 }
 
@@ -769,6 +755,11 @@ function main() {
     toggleSelectionBlock();
     attackGenerator = new SpellGenerator();
     defenceGenerator = new SpellGenerator();
+    if (window.opera) {
+        getStyle('button.menu')['padding-top'] = '11px';
+        selectionButton.style.lineHeight = 1.3;
+        selectionButton.style.paddingTop = '5px';
+    }
     // Create config
     config = {};
     configureParameter('speed', 3);
@@ -792,6 +783,7 @@ function main() {
     for (var i = 0; i < LEVELS.length + 1; i++) {
         spellsByLevel.push([]);
     }
+    spellSelector.deleteCell(0);
     for (var i = 0, column; column = SPELLS[i++];) {
         var cell = spellSelector.insertCell(-1);
         cell.className = 'column';
@@ -825,7 +817,7 @@ function main() {
   <table id="loadingBlockID" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer v0.83</h1>
+        <h1 id="noscriptTitle">SpellTrainer v0.84</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
@@ -847,8 +839,8 @@ function main() {
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer<br>v0.83</td>
-            <td id="menuPadding" class="menu"><button id="selectionButtonID" class="select" type="button" onclick="toggleSelectionBlock()"></button></td>
+            <td id="headerTitle">SpellTrainer<br>v0.84</td>
+            <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
               <table align="right" cellspacing="0" cellpadding="0">
@@ -885,14 +877,13 @@ function main() {
     <tr>
       <td id="selectionBlockID">
         <table id="selectionTable" cellspacing="0" cellpadding="0">
-          <tr id="spellSelectorID">
-          </tr>
+          <tr id="spellSelectorID"><td></td></tr>
         </table>
       </td>
     </tr>
     <tr>
       <td id="welcomeBlockID" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer v0.83</h1>
+        <h1 id="welcomeTitle">SpellTrainer v0.84</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
         <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
@@ -900,8 +891,8 @@ function main() {
         <p>Adjust the settings at the top bar as neccessary and press</p>
         <p><button id="bigStartButton" type="button" onclick="start()">Start!</button></p>
         <p class="bold">Click anywhere in the spell window to stop and return to this screen.</p>
-        <p>When you see a spell written in <span class="example attack">attack colors</span> &ndash; cast it at your imaginary opponent.</p>
-        <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield.</p>
+        <p>When you see a spell written in <span class="example attack">&nbsp;attack colors&nbsp;</span> &ndash; cast it at your imaginary opponent.</p>
+        <p>When you see a spell written in <span class="example defence">&nbsp;defence colors&nbsp;</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield.</p>
         <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.<br>You may adjust tempo factors for individual spells to give yourself more or less time for those spells.</p>
         <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
         <p class="bold">Good luck!</p>
