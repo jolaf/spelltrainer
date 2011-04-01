@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>SpellTrainer v0.73</title>
+<title>SpellTrainer v0.92</title>
 <meta http-equiv="Content-Type" content="Text/HTML; CharSet=ISO-8859-1">
 <meta name="Author" content="Vasily Zakharov (vmzakhar@gmail.com)">
 <link rel="Shortcut Icon" href="favicon.ico">
@@ -74,7 +74,6 @@ td.visible {
 }
 
 td.menu {
-	vertical-align: middle;
 	white-space: nowrap;
 	font-size: 70%;
 	font-weight: bold;
@@ -82,14 +81,31 @@ td.menu {
 	padding: 0 2px;
 }
 
+td.column {
+	vertical-align: top;
+	padding: 2px 2px 5px 0px;
+}
+
+td.spell, td.category {
+	white-space: nowrap;
+	font-size: 60%;
+	color: black;
+	padding-left: 3px;
+}
+
+td.category {
+	font-weight: bold;
+	padding-top: 5px;
+}
+
 td.padleft {
 	padding-left: 6px;
 }
 
 button.menu {
-	width: 5em;
 	height: 42px;
-	padding: 10px 0; /* Opera hack */
+	font-weight: bold;
+	line-height: normal;
 }
 
 .input {
@@ -125,18 +141,18 @@ img.valid {
 	border: 0;
 }
 
-#headerBlock, #footerBlock {
+#headerBlockID, #selectionBlockID, #footerBlockID {
 	color: black;
-	background-color: gray;
+	background-color: silver;
+	border: 1px solid black;
 	height: 42px;
 }
 
 #headerTable {
 	width: 100%;
-	border: 1px solid black;
 }
 
-#logoBlock {
+#logoBlockID {
 	padding-left: 4px;
 }
 
@@ -149,6 +165,7 @@ img.valid {
 
 #menuPadding {
 	width: 100%;
+	text-align: center;
 }
 
 #noscriptTitle, #welcomeTitle {
@@ -157,18 +174,18 @@ img.valid {
 	white-space: nowrap;
 }
 
-#loadingBlock, #mainBlock {
+#loadingBlockID, #mainBlockID, #infoBlockID, #welcomeBlockID, #castBlockID {
 	width: 100%;
 	height: 100%;
 }
 
-#infoBlock, #welcomeBlock {
+#infoBlockID, #welcomeBlockID {
 	color: black;
 	text-align: center;
 	white-space: nowrap;
 }
 
-#speedBlock {
+#speedScrollID {
 	width: 200px;
 	height: 30px;
 	overflow: scroll;
@@ -187,9 +204,8 @@ img.valid {
 	width: 5em;
 }
 
-#castBlock {
+#castBlockID {
 	text-align: center;
-	vertical-align: middle;
 	font-weight: bold;
 }
 
@@ -201,7 +217,7 @@ img.valid {
 	padding: 0.5ex 0.5em;
 }
 
-#loggerBlock {
+#loggerBlockID {
 	height: 38px;
 	font-size: 50%;
 	overflow: auto;
@@ -221,7 +237,7 @@ span.input {
 	padding-top: 2px;
 }
 
-#speedBlock {
+#speedScrollID {
 	overflow-x: scroll;
 	overflow-y: hidden;
 }
@@ -233,10 +249,77 @@ span.input {
 </style>
 <![endif]-->
 <script type="text/javascript">
+var LEVELS = ['Simpla', 'Maxima', 'Ultima'];
 var DEFAULT_FONT_NAME = 'Verdana,Arial,Helvetica,sans-serif';
 var MIN_FONT_SIZE = 20;
 var RULE_OF_N_SPELLS = 3;
 var COOKIE_NAME = 'SpellTrainer';
+var GET_READY = 'Get ready!';
+var NO_SPELLS = 'select spells';
+
+var SPELLS = [
+    [[null, null, [
+      ['Protego', [1.0, 2.4, 7.7], [
+        ['Impedimenta', [1.4, 2.8, 2.6]],
+        ['Tarantallegra', [1.6, 3.2, 6.7]],
+        ['Silencio', [1.1, 2.4, 4.6]]
+      ]],
+      ['Defendo', [1.2, 2.9, 6.1], [
+        ['Rictusempra', [1.3, 1.8, 3.8]],
+        ['Incarcero', [1.1, 2.4, 2.7]],
+        ['Mento Menores', [3.3, 3.5, 1.6]],
+        ['Petrificus Totalus', [null, 3.2, null]]
+      ]],
+      ['Enervate', [1.1, 2.4, 2.7], [
+        ['Stupefy', [1.2, 2.4, 2.2]],
+        ['Achelitus', [2.1, 3.0, 7.3]],
+        ['Maledicero', [2.7, 4.7, 8.3]]
+      ]],
+      ['VIP', null, [
+        ['Incendio', [2.3, 2.7, 5.5], 'Deluvium*'],
+        ['Deluvium', [2.6, 2.9, 5.8], 'Incendio*'],
+        ['Tormentio', [2.0, 3.1, 6.0], 'Floridus*'],
+        ['Floridus', [3.3, 4.1, 6.2], true],
+        ['Conjunctivitus', [1.5, 2.5, 4.6], 'Sensus Videndi*'],
+        ['Sensus Videndi', [1.1, 2.5, 7.6], true],
+        ['Expelliarmus', [null, 3.1, null], 'Para Bellum*'],
+        ['Para Bellum', [null, 4.2, null], true]
+    ]]]]],
+    [[null, null, [
+      ['Unforgivable', null, [
+        ['Imperio', [2, 2, 2] , 'Interfere'],
+        ['Crucio', [2, 2, 2], 'Interfere'],
+        ['Avada Kedavra', [2, null, null]]
+      ]],
+      ['Others', null, [
+        ['Metatrepo', [2, 2, 2], 'Metayono Metatrepo'],
+        ['Metayono Metatrepo', [2, 2, 2], true], // ToDo: spelling?
+        ['Sectumsempra', [2, 2, 2]], // ToDo: Protego Ultima blocks Simpla and Maxima?
+        ['Exitus Vitalis', [2, null, null]],
+        ['Laesa Cordis', [null, 2, 2], 'Fibrillacium Sanguis*'],
+        ['Fibrillacium Sanguis', [null, 2, 2], true]
+    ]]]]],
+    [['Special', null, [
+        ['Expecto Patronum', 2],
+        ['Speculi Verto', 2],
+        ['Fuga Tempero', 2],
+        ['Flexio Fluctus Aeris', 2, 'Conversio Fluctus Aeris'],
+        ['Conversio Fluctus Aeris', 2, true],
+        ['Fidele et Fortis', 2]
+    ]],
+    ['Interfere', 2, [
+        ['Silencium', 2, 'Interfere'],
+        ['Morpheus', 2, 'Interfere'],
+        ['Verbositas', 2, 'Interfere'],
+        ['Amata Sententia', 2, 'Interfere'],
+        ['Plausus', 2, 'Interfere'],
+        ['Haesitantia Linguae', 2, 'Interfere'],
+        ['Clato Verato Nicto', 2, 'Interfere'],
+        ['Furnunculus', 2, 'Formositas'],
+        ['Formositas', 2, true],
+        ['Censorio', 2, 'Interfere'],
+        ['Albaversa', 2, 'Interfere']
+    ]]]];
 
 function debug(message) {
     logger.innerHTML += new Date().toLocaleTimeString() + '&nbsp;&nbsp;' + message + '<br>';
@@ -244,8 +327,7 @@ function debug(message) {
 }
 
 function getStyle(selector) {
-    // Tries both ways to access CSS
-    var rules = document.styleSheets[0].cssRules || document.styleSheets[0].rules;
+    var rules = document.styleSheets[0].cssRules || document.styleSheets[0].rules; // Tries both ways to access CSS
     for (var i = 0, rule; rule = rules[i++];) {
         if (rule.selectorText === selector) {
             return rule.style;
@@ -253,11 +335,227 @@ function getStyle(selector) {
     }
 }
 
+function SpellGenerator() {
+    this.spells = [];
+    this.previousSpells = [];
+    this.next = function() {
+        if (!this.spells.length) {
+            return null;
+        }
+        newSpell:
+        while (true) {
+            spell = this.spells[Math.floor(Math.random() * this.spells.length)];
+            baseIndex = spell.name.indexOf(' ');
+            baseSpell = baseIndex >= 0 ? spell.name.slice(0, baseIndex) : spell.name;
+            if (this.spells.length >= RULE_OF_N_SPELLS) {
+                for (var i = 0, previousSpell; previousSpell = this.previousSpells[i++];) {
+                    if (previousSpell === baseSpell) {
+                        continue newSpell;
+                    }
+                }
+            }
+            this.previousSpells = this.previousSpells.concat([baseSpell]).slice(-RULE_OF_N_SPELLS + 1);
+            return spell;
+        }
+    }
+}
+
+function toggleSelectionBlock() {
+    debug('toggleSelectionBlock');
+    if (selectionBlock.className === 'invisible') {
+        selectionBlock.className = 'visible';
+        selectionButton.innerHTML = 'Select Spells<br>&uarr; &uarr; &uarr;';
+    } else {
+        selectionBlock.className = 'invisible';
+        selectionButton.innerHTML = 'Select Spells<br>&darr; &darr; &darr;';
+    }
+    setFont();
+}
+
+function setMode(element) {
+    debug('setMode');
+    if (!attackControl.checked && !defenceControl.checked) {
+        (element || attackControl).checked = true;
+    }
+}
+
+function validateFactor(element) {
+    if (!element) {
+        return;
+    }
+    debug('validateFactor');
+    element.value = Math.round((parseFloat(element.value) || 1) * 10) / 10;
+}
+
+function setSpellControl(spell, value) {
+    if (spell) {
+        if (spell.control) {
+            spell.control.checked = value;
+        }
+        for (var i = 0, subSpell; subSpell = spell.inCategory[i++];) {
+            setSpellControl(subSpell, value);
+        }
+    }
+}
+
+function checkSpellControl(spell, value) {
+    if (!spell) {
+        return false;
+    }
+    if (!spell.control) {
+        return true;
+    }
+    if (spell.control.checked !== value) {
+        return false;
+    }
+    for (var i = 0, subSpell; subSpell = spell.inCategory[i++];) {
+        if (!checkSpellControl(subSpell, value)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function setCategoryControl(spell, value) {
+    if (spell && spell.category && spell.category.control) {
+        for (var i = 0, subSpell; subSpell = spell.category.inCategory[i++];) {
+            if (!checkSpellControl(subSpell, value)) {
+                return;
+            }
+        }
+        spell.category.control.checked = value;
+        setCategoryControl(spell.category, value);
+    }
+}
+
+function setSpells(element) {
+    debug('setSpells');
+    if (element) {
+        setSpellControl(element.spell, element.checked);
+        setCategoryControl(element.spell, element.checked);
+    }
+    if (castBlock.className === 'invisible') {
+        return;
+    }
+    attackGenerator.spells = [];
+    defenceGenerator.spells = [];
+    for (var i = 0, spell; spell = attackSpells[i++];) {
+        if (spell.control.checked) {
+            attackGenerator.spells.push(spell);
+            if (spell.shield) {
+                defenceGenerator.spells.push(spell);
+            }
+        }
+    }
+    setFont();
+}
+
+function castSpell() {
+    var isAttack = (attackControl.checked && (!defenceControl.checked || Math.random() >= 0.5));
+    var spell = (isAttack ? attackGenerator : defenceGenerator).next();
+    var spellName = (spell ? spell.name : NO_SPELLS);
+    var delay = spellDelay * (spell ? isAttack ? spell.factorControl.value : spell.shield.factorControl.value : 2);
+    debug((isAttack ? 'Attack' : 'Defence') + ': ' + spellName + (!spell || isAttack ? '' : ' / ' + spell.shield.name) + ' (' + delay / 1000 + ')');
+    castBlock.className = (isAttack ? 'attack' : 'defence');
+    castBlock.innerHTML = spellName;
+    timeout = setTimeout('hideSpell()', delay);
+}
+
+function hideSpell() {
+    castBlock.className = 'flash';
+    timeout = setTimeout('castSpell()', 100);
+}
+
+function setColors() {
+    debug('setColors');
+    function doSetColors(style, field, display, control, defaultValue) {
+        try { // Throws exception on IE if color value is incorrect
+            style[field] = display.style.backgroundColor = control.value;
+        } catch(err) {
+            style[field] = display.style.backgroundColor = defaultValue;
+        }
+    }
+    doSetColors(attackStyle, 'color', attackForegroundDisplay, attackForegroundControl, 'gray');
+    doSetColors(attackStyle, 'backgroundColor', attackBackgroundDisplay, attackBackgroundControl, 'white');
+    doSetColors(defenceStyle, 'color', defenceForegroundDisplay, defenceForegroundControl, 'gray');
+    doSetColors(defenceStyle, 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
+}
+
+function setSpeed() {
+    debug('setSpeed');
+    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
+    adjustSpeed(); // calls saveConfig(), we must be sure it's called
+}
+
+function adjustSpeed() {
+    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
+    debug('adjustSpeed ' + speedControl.value);
+    spellDelay = 3000 / speedControl.value;
+    saveConfig();
+}
+
+function resize() {
+    debug('resize');
+    castBlock.style.fontSize = MIN_FONT_SIZE;
+    castBlock.style.fontSize = Math.floor(Math.min(castBlock.offsetHeight * 0.7, castBlock.offsetWidth * aspect)) + 'px';
+}
+
+function setFont() {
+    if (castBlock.className === 'invisible') {
+        return;
+    }
+    debug('setFont');
+    var savedClass = castBlock.className;
+    var savedContent = castBlock.innerHTML;
+    var spells = attackGenerator.spells.concat(defenceGenerator.spells, [GET_READY, NO_SPELLS]);
+    castBlock.className = 'flash';
+    castBlock.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
+    castBlock.style.fontWeight = fontBoldControl.checked ? 'bold' : 'normal';
+    castBlock.style.fontStyle = fontItalicControl.checked ? 'italic' : 'normal';
+    castBlock.style.fontSize = MIN_FONT_SIZE;
+    castBlock.innerHTML = '<span id="test"><\/span>';
+    var test = document.getElementById('test');
+    aspect = 1000;
+    for (var i = 0, spell; spell = spells[i++];) {
+        test.innerHTML = (spell.name || spell);
+        aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
+    }
+    aspect *= 0.7;
+    resize();
+    castBlock.innerHTML = savedContent;
+    castBlock.className = savedClass;
+}
+
+function start() {
+    debug('start');
+    startButton.innerHTML = 'Stop';
+    startButton.onclick = stop;
+    welcomeBlock.className = 'invisible';
+    castBlock.className = 'flash';
+    setSpells();
+    castBlock.innerHTML = GET_READY;
+    body.onresize = onresize = resize;
+    castBlock.className = 'ready';
+    timeout = setTimeout('hideSpell()', spellDelay);
+}
+
+function stop() {
+    debug('stop');
+    clearTimeout(timeout);
+    startButton.innerHTML = 'Start!';
+    startButton.onclick = start;
+    welcomeBlock.className = 'visible';
+    castBlock.className = 'invisible';
+    body.onresize = onresize = null;
+}
+
 function Parameter(control, defaultValue) {
     this.control = control;
     this.defaultValue = defaultValue;
     this.isBoolean = (typeof this.defaultValue === 'boolean');
     this.isNumber = (typeof this.defaultValue === 'number');
+    this.isInteger = (this.isNumber && this.defaultValue % 1 == 0);
+    this.isFloat = (this.isNumber && !this.isInteger);
 
     this.get = function() {
         return (this.isBoolean ? this.control.checked : this.control.value);
@@ -267,9 +565,15 @@ function Parameter(control, defaultValue) {
         if (this.isBoolean) {
             this.control.checked = (value === true || value === 'true');
         } else {
-            this.control.value = (this.isNumber ? parseInt(value) : value);
+            this.control.value = (this.isInteger ? parseInt(value) : this.isFloat ? parseFloat(value) : value);
         }
     }
+}
+
+function configureParameter(parameter, defaultValue) {
+    var control = document.getElementById(parameter + 'ControlID');
+    config[parameter] = new Parameter(control, defaultValue);
+    return this[parameter + 'Control'] = control; // add to global namespace
 }
 
 function saveConfig() {
@@ -317,244 +621,230 @@ function loadConfig(useCookie) {
     setSpeed(); // calls adjustSpeed() and saveConfig()
 }
 
-function SpellGenerator() {
-    this.spells = [];
-    this.previousSpells = [];
-    this.next = function() {
-        newSpell:
-        while (true) {
-            spell = this.spells[Math.floor(Math.random() * this.spells.length)];
-            baseIndex = spell.indexOf(' ');
-            baseSpell = baseIndex >= 0 ? spell.slice(0, baseIndex) : spell;
-            if (this.spells.length >= RULE_OF_N_SPELLS) {
-                for (var i = 0, previousSpell; previousSpell = this.previousSpells[i++];) {
-                    if (previousSpell === baseSpell) {
-                        continue newSpell;
-                    }
+function Spell(name, control, factorControl, shield, category) {
+    this.setShield = function(shield) {
+        this.shield = (shield == true || this.isCategory ? null : shield ? shield : (this.category && this.category.isShield) ? this.category : null);
+        if (this.shield && typeof this.shield === 'object') {
+            if (!this.shield.isShield) {
+                this.shield.isShield = true;
+                shieldSpells.push(this.shield);
+            }
+            this.shield.attacks.push(this);
+        }
+    }
+    this.name = name;
+    this.control = control;
+    if (control) {
+        control.spell = this;
+    }
+    this.factorControl = factorControl;
+    this.category = category;
+    this.isCategory = (typeof shield === 'object');
+    this.isSpell = Boolean(factorControl);
+    this.isAttack = Boolean(this.isSpell && !this.isCategory && control);
+    this.isShield = Boolean(this.isSpell && !this.isAttack); // can be also set to true on second pass
+    this.setShield(shield);
+    this.attacks = [];
+    this.inCategory = [];
+    if (this.isSpell) {
+        allSpells.push(this);
+    }
+    if (this.isAttack) {
+        attackSpells.push(this);
+    }
+    if (this.isShield) {
+        shieldSpells.push(this);
+    }
+    if (this.category) {
+        category.inCategory.push(this);
+    }
+}
+
+function createSpellBlock(table, data, category, on) {
+    var spellName = data[0];
+    var factors = data[1];
+    var shield = data[2];
+    var columns;
+    var d = data;
+    var f;
+    while (true) {
+        f = d[1];
+        if (f && typeof f === 'object' && f.length) {
+            columns = LEVELS;
+            break;
+        }
+        d = d[2];
+        if (d && typeof d === 'object' && d[0]) {
+            d = d[0];
+        } else {
+            columns = [''];
+            break;
+        }
+    }
+    var minLevel = (factors ? columns.length : 1);
+    if (factors && columns.length > 1) {
+        var found = false;
+        for (var i = 0; i < factors.length; i++) {
+            if (factors[i]) { 
+                if (found) {
+                    minLevel = i;
+                    break;
+                } else{
+                    found = true;
                 }
             }
-            this.previousSpells = this.previousSpells.concat([baseSpell]).slice(-RULE_OF_N_SPELLS + 1);
-            return spell;
         }
     }
-}
-
-function setMode(element) {
-    debug('setMode');
-    if (!attackControl.checked && !defenceControl.checked) {
-        (element || attackControl).checked = true;
-    }
-}
-
-function setSpells(element) {
-    if (!simplaSpellControl.checked && !maximaSpellControl.checked && !ultimaSpellControl.checked) {
-        if (element) {
-            element.checked = true;
-            return;
+    var className = (typeof shield === 'object') ? 'category' : 'spell';
+    var row = table.insertRow(-1);
+    var ret = [];
+    var cell;
+    var factor;
+    for (var i = 0; i < columns.length; i++) {
+        var column = columns[i];
+        factor = (factors && typeof factors === 'object' ? factors[i] : factors);
+        cell = row.insertCell(-1);
+        cell.className = className + ' padleft';
+        var control = null;
+        if (shield != true && (!factors || factor)) {
+            cell.innerHTML = '<input class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()">';
+            control = cell.firstChild;
         }
-        simplaSpellControl.checked = true;
-    }
-    if (cast.className !== 'visible') {
-        return;
-    }
-    debug('setSpells');
-    attackSpells.spells = defenceSpells.spells =
-        (simplaSpellControl.checked ? vipSpellControl.checked ? simpla.concat(simplaVip) : simpla : []).concat(
-        (maximaSpellControl.checked ? vipSpellControl.checked ? maxima.concat(maximaVip) : maxima : []),
-        (ultimaSpellControl.checked ? vipSpellControl.checked ? ultima.concat(ultimaVip) : ultima : []));
-    setFont();
-}
-
-function castSpell() {
-    if (attackControl.checked && (!defenceControl.checked || Math.random() >= 0.5)) {
-        cast.innerHTML = attackSpells.next();
-        body.className = 'attack';
-        debug('Attack: ' + cast.innerHTML);
-    } else {
-        cast.innerHTML = defenceSpells.next();
-        body.className = 'defence';
-        debug('Defence: ' + cast.innerHTML);
-    }
-    timeout = setTimeout('hideSpell()', spellDelay);
-}
-
-function hideSpell() {
-    body.className = 'flash';
-    timeout = setTimeout('castSpell()', 100);
-}
-
-function setColors() {
-    debug('setColors');
-    function doSetColors(style, field, display, control, defaultValue) {
-        try { // Throws exception on IE if color value is incorrect
-            style[field] = display.style.backgroundColor = control.value;
-        } catch(err) {
-            style[field] = display.style.backgroundColor = defaultValue;
+        cell = row.insertCell(-1);
+        cell.className = className;
+        var factorControl = null;
+        if (!spellName) {
+            cell.innerHTML = column;
+        } else if (factor) {
+            cell.innerHTML = '<input class="menu input" type="text" maxlength="4" onchange="validateFactor(this); saveConfig()">';
+            factorControl = cell.firstChild;
+        }
+        if (control || factorControl) {
+            var fullSpellName = (!spellName ? column : (column && i >= minLevel) ? (spellName + ' ' + column) : spellName);
+            var fullShield = (typeof shield === 'string') ? shield.replace('*', (column && i >= minLevel) ? (' ' + column) : '') : shield;
+            var n = 0;
+            while (fullSpellName + (n || '') in config) {
+                n++;
+            }
+            fullSpellName += (n || '');
+            if (control) {
+                config[fullSpellName] = new Parameter(control, on && on[i]);
+            }
+            if (factorControl) {
+                config[fullSpellName + ' Factor'] = new Parameter(factorControl, factor);
+            }
+            spell = new Spell(fullSpellName, control, factorControl, fullShield, category ? category[i] : null);
+            if (typeof shield === 'string') {
+                spellsNeedingShields.push(spell);
+            }
+            ret.push(spell);
+        } else {
+            ret.push(null);
         }
     }
-    doSetColors(attackStyle, 'color', attackForegroundDisplay, attackForegroundControl, 'gray');
-    doSetColors(attackStyle, 'backgroundColor', attackBackgroundDisplay, attackBackgroundControl, 'white');
-    doSetColors(defenceStyle, 'color', defenceForegroundDisplay, defenceForegroundControl, 'gray');
-    doSetColors(defenceStyle, 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
+    cell = row.insertCell(-1);
+    cell.className = className;
+    cell.innerHTML = spellName;
+    return ret;
 }
 
-function setSpeed() {
-    debug('setSpeed');
-    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
-    adjustSpeed(); // calls saveConfig(), we must be sure it's called
-}
-
-function adjustSpeed() {
-    debug('adjustSpeed');
-    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
-    spellDelay = 10000 / speedControl.value;
-    saveConfig();
-}
-
-function resize() {
-    debug('resize');
-    cast.style.fontSize = MIN_FONT_SIZE;
-    cast.style.fontSize = Math.floor(Math.min(cast.offsetHeight * 0.7, cast.offsetWidth * aspect)) + 'px';
-}
-
-function setFont() {
-    if (cast.className !== 'visible') {
-        return;
+function createSpellSection(columnBlock, section, superSectionObjects, on) {
+    var sectionObjects = createSpellBlock(columnBlock, section, superSectionObjects, on);
+    var subSections = section[2];
+    if (subSections && typeof subSections === 'object') {
+        for (var i = 0, subSection; subSection = subSections[i++];) {
+            createSpellSection(columnBlock, subSection, sectionObjects, on);
+        }
     }
-    debug('setFont');
-    var savedClass = body.className;
-    var savedContent = cast.innerHTML;
-    var spells = attackSpells.spells.concat(defenceSpells.spells);
-    body.className = 'flash';
-    cast.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
-    cast.style.fontWeight = fontWeightControl.checked ? 'bold' : 'normal';
-    cast.style.fontStyle = fontStyleControl.checked ? 'italic' : 'normal';
-    cast.style.fontSize = MIN_FONT_SIZE;
-    cast.innerHTML = '<span id="test"><\/span>';
-    var test = document.getElementById('test');
-    aspect = 1000;
-    for (var i = 0; test.innerHTML = spells[i++];) {
-        aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
-    }
-    aspect *= 0.7;
-    resize();
-    cast.innerHTML = savedContent;
-    body.className = savedClass;
-}
-
-function start() {
-    debug('start');
-    startButton.innerHTML = 'Stop';
-    startButton.onclick = stop;
-    body.className = 'flash';
-    welcome.className = 'invisible';
-    cast.className = 'visible';
-    setSpells();
-    cast.innerHTML = 'Get ready!';
-    body.onresize = onresize = resize;
-    body.className = 'ready';
-    timeout = setTimeout('hideSpell()', spellDelay);
-}
-
-function stop() {
-    debug('stop');
-    clearTimeout(timeout);
-    startButton.innerHTML = 'Start';
-    startButton.onclick = start;
-    body.className = 'flash';
-    cast.className = 'invisible';
-    welcome.className = 'visible';
-    body.className = 'welcome';
-    body.onresize = onresize = null;
 }
 
 function main() {
-    logger = document.getElementById('loggerBlock');
+    logger = document.getElementById('loggerBlockID');
     debug('main');
-    // Create basic spell lists
-    simpla = ['Impedimenta', 'Tarantallegra', 'Silencio',	// Protego
-              'Rictusempra', 'Incarcero', 'Mento Menores',	// Defendo
-              'Stupefy', 'Achelitus', 'Maledicero'];		// Enervate
-    simplaVip = ['Incendio', 'Deluvium', 'Tormentio', 'Conjunctivitus'];
-    function arrayWithSuffix(array, suffix) {
-        ret = [];
-        for (var i = 0, s; s = array[i++];) {
-             ret.push(s + ' ' + suffix);
-        };
-        return ret;
-    }
-    maxima = arrayWithSuffix(simpla, 'Maxima').concat('Petrificus Totalus');
-    maximaVip = arrayWithSuffix(simplaVip, 'Maxima').concat('Expelliarmus');
-    ultima = arrayWithSuffix(simpla, 'Ultima');
-    ultimaVip = arrayWithSuffix(simplaVip, 'Ultima');
-    attackSpells = new SpellGenerator();
-    defenceSpells = new SpellGenerator();
-    // Show main page
-    document.getElementById('loadingBlock').className = 'invisible';
-    document.getElementById('mainBlock').className = 'visible';
-    // Basic blocks
+    // HTML references
+    attackStyle = getStyle('.attack');
+    defenceStyle = getStyle('.defence');
     body = document.getElementsByTagName('body')[0];
-    cast = document.getElementById('castBlock');
-    welcome = document.getElementById('welcomeBlock');
+    selectionBlock = document.getElementById('selectionBlockID');
+    welcomeBlock = document.getElementById('welcomeBlockID');
+    castBlock = document.getElementById('castBlockID');
     startButton = document.getElementById('startButtonID');
+    selectionButton = document.getElementById('selectionButtonID');
     resetButton = document.getElementById('resetButtonID');
-    // Spell controls
-    simplaSpellControl = document.getElementById('simplaSpellControlID');
-    maximaSpellControl = document.getElementById('maximaSpellControlID');
-    ultimaSpellControl = document.getElementById('ultimaSpellControlID');
-    vipSpellControl = document.getElementById('vipSpellControlID');
-    // Speed controls
-    speedDelay = null;
-    speedControl = document.getElementById('speedControlID');
-    speedScroll = document.getElementById('speedBlock');
+    spellSelector = document.getElementById('spellSelectorID');
+    speedScroll = document.getElementById('speedScrollID');
+    attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
+    attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
+    defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
+    defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplayID');
+    // Initial settings
+    timeout = null;
+    stop();
+    toggleSelectionBlock();
+    attackGenerator = new SpellGenerator();
+    defenceGenerator = new SpellGenerator();
+    if (window.opera) {
+        getStyle('button.menu')['padding-top'] = '11px';
+        selectionButton.style.lineHeight = 1.3;
+        selectionButton.style.paddingTop = '5px';
+    }
+    // Create config
+    config = {};
+    configureParameter('speed', 3);
+    configureParameter('attack', true);
+    configureParameter('defence', true);
+    configureParameter('attackForeground', 'green');
+    configureParameter('attackBackground', 'black');
+    configureParameter('defenceForeground', 'white');
+    configureParameter('defenceBackground', 'maroon');
+    configureParameter('fontFamily', DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(',')));
+    configureParameter('fontBold', true);
+    configureParameter('fontItalic', false);
+    // Configure spell selector
+    allSpells = [];
+    attackSpells = [];
+    shieldSpells = [];
+    spellsNeedingShields = [];
+    spellSelector.deleteCell(0);
+    for (var i = 0, column; column = SPELLS[i++];) {
+        var cell = spellSelector.insertCell(-1);
+        cell.className = 'column';
+        cell.innerHTML = '<table cellspacing="0" cellpadding="0"><\/table>';
+        var columnBlock = spellSelector.lastChild.firstChild;
+        for (var j = 0, section; section = column[j++];) {
+            createSpellSection(columnBlock, section, null, (i > 1) ? null : [true, true, false]);
+        }
+    }
+    // Link remaining shields
+    for (var i = 0, spell; spell = spellsNeedingShields[i++];) {
+        for (var j = 0, shieldSpell; shieldSpell = allSpells[j++];) {
+            if (shieldSpell.name == spell.shield) {
+                spell.setShield(shieldSpell);
+                break;
+            }
+        }
+        if (!shieldSpell) {
+            throw 'No shield found for ' + spell.name + ' ( ' + spell.shield + ')';
+        }
+    }
+    delete allSpells;
+    delete spellsNeedingShields;
+    // Show main page
+    document.getElementById('loadingBlockID').className = 'invisible';
+    document.getElementById('mainBlockID').className = 'visible';
+    loadConfig(true);
     speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
     speedScroll.onscroll = adjustSpeed;
-    // Attack controls
-    attackStyle = getStyle('.attack');
-    attackControl = document.getElementById('attackControlID');
-    attackForegroundControl = document.getElementById('attackForegroundControlID');
-    attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
-    attackBackgroundControl = document.getElementById('attackBackgroundControlID');
-    attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
-    // Defence controls
-    defenceStyle = getStyle('.defence');
-    defenceControl = document.getElementById('defenceControlID');
-    defenceForegroundControl = document.getElementById('defenceForegroundControlID');
-    defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
-    defenceBackgroundControl = document.getElementById('defenceBackgroundControlID');
-    defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplayID');
-    // Font controls
-    fontFamilyControl = document.getElementById('fontFamilyControlID');
-    fontWeightControl = document.getElementById('fontWeightControlID');
-    fontStyleControl = document.getElementById('fontStyleControlID');
-    // Load initial configuration
-    config = {
-        simplaSpells: new Parameter(simplaSpellControl, true),
-        maximaSpells: new Parameter(maximaSpellControl, true),
-        ultimaSpells: new Parameter(ultimaSpellControl, false),
-        vipSpells: new Parameter(vipSpellControl, true),
-        speed: new Parameter(speedControl, 3),
-        attack: new Parameter(attackControl, true),
-        attackForeground: new Parameter(attackForegroundControl, 'green'),
-        attackBackground: new Parameter(attackBackgroundControl, 'black'),
-        defence: new Parameter(defenceControl, true),
-        defenceForeground: new Parameter(defenceForegroundControl, 'white'),
-        defenceBackground: new Parameter(defenceBackgroundControl, 'maroon'),
-        fontFamily: new Parameter(fontFamilyControl, DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(','))),
-        fontBold: new Parameter(fontWeightControl, true),
-        fontItalic: new Parameter(fontStyleControl, false)
-    };
-    loadConfig(true);
-    body.className = 'welcome';
 }
 </script>
 </head>
 <body onload="main()">
-  <table id="loadingBlock" class="visible" cellspacing="0" cellpadding="0">
+  <table id="loadingBlockID" class="visible" cellspacing="0" cellpadding="0">
     <tr>
-      <td id="infoBlock">
-        <h1 id="noscriptTitle">SpellTrainer v0.73</h1>
+      <td id="infoBlockID">
+        <h1 id="noscriptTitle">SpellTrainer v0.92</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
+        <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <br>
@@ -568,44 +858,35 @@ function main() {
       </td>
     </tr>
   </table>
-  <table id="mainBlock" class="invisible" cellspacing="0" cellpadding="0">
+  <table id="mainBlockID" class="invisible" cellspacing="0" cellpadding="0">
     <tr>
-      <td id="headerBlock">
+      <td id="headerBlockID">
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
-            <td id="logoBlock"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer<br>v0.73</td>
-            <td id="menuPadding"></td>
+            <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
+            <td id="headerTitle">SpellTrainer<br>v0.92</td>
+            <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
+            <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
               <table align="right" cellspacing="0" cellpadding="0">
                 <tr>
                   <td>
                     <table cellspacing="0" cellpadding="0">
                       <tr>
-                        <td rowspan="2" class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()">Start</button></td>
-                        <td class="menu padleft right">Simpla</td>
-                        <td class="menu"><input id="simplaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()"></td>
-                        <td class="menu padleft right">Ultima</td>
-                        <td class="menu"><input id="ultimaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()"></td>
                         <td class="menu padleft">Tempo <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed(); saveConfig()"> <span class="light">1 slowest, 10 fastest</span></td>
                         <td class="menu padleft right">Attack</td>
                         <td class="menu"><input id="attackControlID" class="checkbox" type="checkbox" onclick="setMode(this); saveConfig()"></td>
                         <td class="menu"><input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"></td>
                         <td colspan="4" class="menu padleft">Font <input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont(); saveConfig()"></td>
-                        <td rowspan="2" class="menu padleft"><button id="resetButtonID" class="menu" type="button" onclick="loadConfig(false)">Reset</button></td>
                       </tr>
                       <tr>
-                        <td class="menu padleft right">Maxima</td>
-                        <td class="menu"><input id="maximaSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()"></td>
-                        <td class="menu padleft right">VIP</td>
-                        <td class="menu"><input id="vipSpellControlID" class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()"></td>
-                        <td class="menu padleft"><div id="speedBlock"><div id="speedFill">&nbsp;</div></div></td>
+                        <td class="menu padleft"><div id="speedScrollID"><div id="speedFill">&nbsp;</div></div></td>
                         <td class="menu padleft right">Defence</td>
                         <td class="menu"><input id="defenceControlID" class="checkbox" type="checkbox" onclick="setMode(this); saveConfig()"></td>
                         <td class="menu"><input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"></td>
-                        <td class="menu padleft"><input id="fontWeightControlID" class="checkbox" type="checkbox" onclick="setFont(); saveConfig()"></td>
+                        <td class="menu padleft"><input id="fontBoldControlID" class="checkbox" type="checkbox" onclick="setFont(); saveConfig()"></td>
                         <td class="menu">bold</td>
-                        <td class="menu"><input id="fontStyleControlID" class="checkbox" type="checkbox" onclick="setFont(); saveConfig()"></td>
+                        <td class="menu"><input id="fontItalicControlID" class="checkbox" type="checkbox" onclick="setFont(); saveConfig()"></td>
                         <td class="menu">italic</td>
                       </tr>
                     </table>
@@ -613,48 +894,40 @@ function main() {
                 </tr>
               </table>
             </td>
+            <td class="menu padleft"><button id="resetButtonID" class="menu" type="button" onclick="loadConfig(false)">Reset</button></td>
           </tr>
         </table>
       </td>
     </tr>
     <tr>
-      <td id="welcomeBlock" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer v0.73</h1>
+      <td id="selectionBlockID">
+        <table id="selectionTable" cellspacing="0" cellpadding="0">
+          <tr id="spellSelectorID"><td></td></tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td id="welcomeBlockID" class="visible">
+        <h1 id="welcomeTitle">SpellTrainer v0.92</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/">Latest version</a>] [<a href="http://code.google.com/p/spelltrainer/">Project page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact mail</a>]</p>
+        <p><strong>Save Page As</strong> to have your local copy.</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://hp-ekb.ru">Hogwarts Seasons LARPs</a>.</p>
         <p>Adjust the settings at the top bar as neccessary and press</p>
         <p><button id="bigStartButton" type="button" onclick="start()">Start!</button></p>
         <p class="bold">Click anywhere in the spell window to stop and return to this screen.</p>
-        <p>When you see a spell written in <span class="example attack">attack colors</span> &ndash; cast it at your imaginary opponent.</p>
-        <p>When you see a spell written in <span class="example defence">defence colors</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield:</p>
-        <table align="center" cellspacing="0" cellpadding="0">
-          <tr>
-            <td class="right">
-                  Impedimenta, Tarantallegra, Silencio: <span class="bold">Protego</span>
-              <br>Rictusempra, Incarcero, Mento Menores, Petrificus Totalus: <span class="bold">Defendo</span>
-              <br>Stupefy, Achelitus, Maledicero: <span class="bold">Enervate</span>
-              <br>Expelliarmus: <span class="bold">Para Bellum</span>
-            </td>
-            <td>&nbsp;&nbsp;&nbsp;</td>
-            <td>
-                  Incendio: <span class="bold">Deluvium</span>
-              <br>Deluvium: <span class="bold">Incendio</span>
-              <br>Tormentio: <span class="bold">Floridus</span>
-              <br>Conjunctivitus: <span class="bold">Sensus Videndi</span>
-            </td>
-          </tr>
-        </table>
-        <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.</p>
+        <p>When you see a spell written in <span class="example attack">&nbsp;attack colors&nbsp;</span> &ndash; cast it at your imaginary opponent.</p>
+        <p>When you see a spell written in <span class="example defence">&nbsp;defence colors&nbsp;</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield.</p>
+        <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.<br>You may adjust tempo factors for individual spells to give yourself more or less time for those spells.</p>
         <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
         <p class="bold">Good luck!</p>
         <p><br><a href="http://validator.w3.org/check?uri=referer" title="Valid HTML 4.01 Transitional"><img class="valid" src="validhtml401.png" alt="Valid HTML 4.01 Transitional"></a> <a href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS 2.1"><img class="valid" src="validcss.gif" alt="Valid CSS 2.1"></a></p>
       </td>
-      <td id="castBlock" class="invisible" onclick="stop()"></td>
+      <td id="castBlockID" class="invisible" onclick="stop()"></td>
     </tr>
     <tr>
-      <td id="footerBlock">
-        <div id="loggerBlock"></div>
+      <td id="footerBlockID">
+        <div id="loggerBlockID"></div>
       </td>
     </tr>
   </table>
