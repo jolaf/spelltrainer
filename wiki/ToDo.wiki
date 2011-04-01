@@ -10,11 +10,13 @@
 
   * + Create top controls to set spells to use, font, colors, delay.
   * + Create cookies to store the configuration.
-  * Measure spell relative casting time and make delays proportional.
-  * Allow control of spells to use by spell and by group.
-  * Include Transfiguration shields, Hooligan spells, anything else?
+  * + Measure spell relative casting time and make delays proportional.
+  * + Allow control of spells to use by spell and by group.
+  * + Include Transfiguration shields, Hooligan spells, anything else?
   * + Create publishing script.
   * + Create a fancy design.
+  * Add audio support.
+  * Add video support.
 
 = Thoughts =
 
@@ -22,5 +24,5 @@
   * + If got rid of icon, remove bottom main() call.
   * -- If not got rid of icon, consider moving whole JavaScript to the page bottom.
   * Remove console altogether, maybe create some another footer.
-  * Remove Python version altogether?
+  * + Remove Python version altogether?
   * Think of adding support for fast series.
