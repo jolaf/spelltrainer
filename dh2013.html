@@ -249,7 +249,6 @@ span.input {
 </style>
 <![endif]-->
 <script type="text/javascript">
-var LEVELS = ['Simpla', 'Maxima'];
 var SERIES_LENGTH = [3, 5];
 var SERIES_DELAY = 3;
 var RULE_OF_N_SPELLS = 3;
@@ -260,32 +259,26 @@ var GET_READY = 'Get ready!';
 var NO_SPELLS = 'select spells';
 
 var SPELLS = [
-      [[null, null, [
-        ['Stupefy', [2.4, 2.4], 'Enervate'],
-        ['Enervate', [2.4, 2.4], true],
-        ['Silencio', [2.4, 2.4], 'Diffendo'],
-        ['Diffendo', [2.9, 2.9], true],
-        ['Expelliarmus', [3.1, 3.1], 'Protego'],
-        ['Protego', [2.4, 2.4], true],
-        ['Conjunctivitus', [2.5, 2.5], 'Sensus Videndi'],
-        ['Sensus Videndi', [2.5, 2.5], true],
-        ['Mento Menores', [3.5, 3.5], 'Sanomento'],
-        ['Sanomento', [2.5, 2.5], true],
-        ['Incarcero', [2.4, 2.4], 'Liberacio'],
-        ['Liberacio', [2.5, 2.5], true],
-        ['Petrificus Totalus', [3.2, 3.2], 'Animificio'],
-        ['Animificio', [2.5, 2.5], true],
-     ]]],
-     [[null, null, [
-      ['Unforgivable', [1.1, 1.1], [
-        ['Imperio', [2, 2] , 'Unforgivable'],
-        ['Crucio', [2, 2], 'Unforgivable'],
-        ['Avada Kedavra', [2, null]]
-     ]]]]],
-     [[null, null, [
-      ['Special', null, [
-        ['Sectumsempra', [2, 2, 2]],
-     ]]]]]
+      [['Basic', null, [
+        ['Stupefy', 1, 'Enervate'],
+        ['Enervate', 1.1, true],
+        ['Silencio', 1.2, 'Diffendo'],
+        ['Diffendo', 1.4, true],
+        ['Expelliarmus', 1.7, 'Protego'],
+        ['Protego', 1.3, true],
+        ['Conjunctivitus', 1.2, 'Sensus Videndi'],
+        ['Sensus Videndi', 1.3, true],
+        ['Mento Menores', 1.6, 'Sanomento'],
+        ['Sanomento', 1.2, true],
+        ['Incarcero', 1.2, 'Liberacio'],
+        ['Liberacio', 1.1, true],
+        ['Petrificus Totalus', 1.4, 'Animificio'],
+        ['Animificio', 1.2, true]
+      ]]],
+      [['Others', null, [
+        ['Crucio', 1, ''],
+        ['Sectumsempra', 1.4, '']
+      ]]]
     ];
 
 function debug(message) {
@@ -319,28 +312,9 @@ function SpellGenerator() {
             spell = this.spells[Math.floor(Math.random() * this.spells.length)];
             baseSpell = baseSpellName(spell);
             if (this.spells.length >= RULE_OF_N_SPELLS) {
-                checkRule = true;
-                if (this.spells.length <= LEVELS.length * (RULE_OF_N_SPELLS - 1)) {
-                    bases = [];
-                    nextSpellCheck:
-                    for (var i = 0, check; check = this.spells[i++];) {
-                        check = baseSpellName(check);
-                        for (var j = 0, base; base = bases[j++];) {
-                            if (check === base) {
-                                continue nextSpellCheck;
-                            }
-                        }
-                        bases.push(check);
-                    }
-                    if (bases.length < RULE_OF_N_SPELLS) {
-                        checkRule = false;
-                    }
-                }
-                if (checkRule) {
-                    for (var i = 0, previousSpell; previousSpell = this.previousSpells[i++];) {
-                        if (previousSpell === baseSpell) {
-                            continue newSpell;
-                        }
+                for (var i = 0, previousSpell; previousSpell = this.previousSpells[i++];) {
+                    if (previousSpell === baseSpell) {
+                        continue newSpell;
                     }
                 }
             }
@@ -480,7 +454,7 @@ function setSpeed() {
 function adjustSpeed() {
     speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
     //debug('adjustSpeed ' + speedControl.value);
-    spellDelay = 3000 / speedControl.value;
+    spellDelay = 6000 / speedControl.value;
     saveConfig();
 }
 
@@ -660,7 +634,7 @@ function createSpellBlock(table, data, category, on) {
     while (true) {
         f = d[1];
         if (f && typeof f === 'object' && f.length) {
-            columns = LEVELS;
+            columns = [''];
             break;
         }
         d = d[2];
@@ -700,12 +674,10 @@ function createSpellBlock(table, data, category, on) {
             cell.innerHTML = '<input class="checkbox" type="checkbox" onclick="setSpells(this); saveConfig()">';
             control = cell.firstChild;
         }
-        cell = row.insertCell(-1);
-        cell.className = className;
         var factorControl = null;
-        if (!spellName) {
-            cell.innerHTML = column;
-        } else if (factor) {
+        if (spellName && factor) {
+            cell = row.insertCell(-1);
+            cell.className = className;
             cell.innerHTML = '<input class="menu input" type="text" maxlength="4" onchange="validateFactor(this); saveConfig()">';
             factorControl = cell.firstChild;
         }
@@ -724,7 +696,7 @@ function createSpellBlock(table, data, category, on) {
                 config[fullSpellName + ' Factor'] = new Parameter(factorControl, factor);
             }
             spell = new Spell(fullSpellName, control, factorControl, fullShield, category ? category[i] : null);
-            if (typeof shield === 'string') {
+            if (typeof shield === 'string' && shield) {
                 spellsNeedingShields.push(spell);
             }
             ret.push(spell);
@@ -735,6 +707,9 @@ function createSpellBlock(table, data, category, on) {
     cell = row.insertCell(-1);
     cell.className = className;
     cell.innerHTML = spellName;
+    if (!spellName || !factor) {
+        cell.colSpan = 2;
+    }
     return ret;
 }
 
@@ -833,7 +808,7 @@ function main() {
   <table id="loadingBlockID" class="visible" cellspacing="0" cellpadding="0">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.03</h1>
+        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.04</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
@@ -854,7 +829,7 @@ function main() {
         <table id="headerTable" cellspacing="0" cellpadding="0">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer/DH2013<br>v1.03</td>
+            <td id="headerTitle">SpellTrainer/DH2013<br>v1.04</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
@@ -898,7 +873,7 @@ function main() {
     </tr>
     <tr>
       <td id="welcomeBlockID" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.03</h1>
+        <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.04</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
