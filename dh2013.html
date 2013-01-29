@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE HTML>
 <html>
 <head>
 <title>SpellTrainer/DH2013</title>
@@ -10,6 +10,13 @@ html, body {
 	margin: 0;
 	padding: 0;
 	font-family: Verdana, Arial, Helvetica, sans-serif;
+	width: 100%;
+	height: 100%;
+}
+
+table {
+	border-spacing: 0;
+	border-collapse: collapse;
 }
 
 p, td {
@@ -75,7 +82,7 @@ td.visible {
 
 td.menu {
 	white-space: nowrap;
-	font-size: 70%;
+	font-size: 85%;
 	font-weight: bold;
 	color: black;
 	padding: 0 2px;
@@ -88,7 +95,7 @@ td.column {
 
 td.spell, td.category {
 	white-space: nowrap;
-	font-size: 60%;
+	font-size: 75%;
 	color: black;
 	padding-left: 3px;
 }
@@ -174,7 +181,7 @@ img.valid {
 	white-space: nowrap;
 }
 
-#loadingBlockID, #mainBlockID, #infoBlockID, #welcomeBlockID, #castBlockID {
+#loadingBlockID, #mainBlockID, #infoBlockID, #centerBlockID, #centerTable, #welcomeBlockID, #castBlockID {
 	width: 100%;
 	height: 100%;
 }
@@ -185,19 +192,24 @@ img.valid {
 	white-space: nowrap;
 }
 
-#speedScrollID {
+#startButtonID {
+	width: 9ex;
+}
+
+#speedScrollID, #volumeScrollID {
 	width: 200px;
 	height: 30px;
 	overflow: scroll;
 }
 
-#speedFill {
+#speedFill, #volumeFill {
 	width: 1000px;
 	height: 0;
 }
 
-#speedControlID {
-	width: 2em;
+#speedControlID, #volumeControlID {
+	width: 1em;
+	text-align: center;
 }
 
 #fontFamilyControlID {
@@ -223,31 +235,6 @@ img.valid {
 	overflow: auto;
 }
 </style>
-<!--[if IE]>
-<style type="text/css">
-table.visible, td.visible {
-	display: block;
-}
-
-input.checkbox {
-	margin-left: -3px;
-}
-
-span.input {
-	padding-top: 2px;
-}
-
-#speedScrollID {
-	overflow-x: scroll;
-	overflow-y: hidden;
-}
-
-#bigStartButton {
-	margin: 1.5ex 0;
-	padding: 0.1ex 0;
-}
-</style>
-<![endif]-->
 <script type="text/javascript">
 var SERIES_LENGTH = [3, 5];
 var SERIES_DELAY = 3;
@@ -282,7 +269,7 @@ var SPELLS = [
     ];
 
 function debug(message) {
-    logger.innerHTML += new Date().toLocaleTimeString() + '&nbsp;&nbsp;' + message + '<br>';
+    logger.innerHTML += new Date().toTimeString().split(' ')[0] + '&nbsp;&nbsp;' + message + '<br>';
     logger.scrollTop = logger.scrollHeight;
 }
 
@@ -419,9 +406,13 @@ function castSpell() {
     var spell = (isAttack ? attackGenerator : defenceGenerator).next();
     var spellName = (spell ? spell.name : NO_SPELLS);
     var delay = spellDelay * (spell ? isAttack ? spell.factorControl.value : spell.shield.factorControl.value : 2);
-    debug((isAttack ? 'Attack' : 'Defence') + ': ' + spellName + (!spell || isAttack ? '' : ' / ' + spell.shield.name) + ' (' + delay / 1000 + ')');
+    debug((isAttack ? 'Attack' : 'Defence') + ': ' + spellName + (!spell || isAttack ? '' : ' / ' + spell.shield.name) + ' (' + Math.round(delay / 10) / 100 + ')');
     castBlock.className = (isAttack ? 'attack' : 'defence');
     castBlock.innerHTML = spellName;
+    if (spell && spell.audio && volume >= 0.1) {
+        spell.audio.currentTime = 0;
+        spell.audio.play();
+    }
     timeout = setTimeout('hideSpell()', delay);
 }
 
@@ -447,15 +438,41 @@ function setColors() {
 
 function setSpeed() {
     //debug('setSpeed');
-    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 9;
-    adjustSpeed(); // calls saveConfig(), we must be sure it's called
+    speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 8;
+    // calls adjustSpeed() in most cases
 }
 
 function adjustSpeed() {
-    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 9 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
+    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 8 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
     //debug('adjustSpeed ' + speedControl.value);
     spellDelay = 6000 / speedControl.value;
     saveConfig();
+}
+
+function setVolume() {
+    //debug('setVolume');
+    volumeScroll.scrollLeft = (volumeScroll.scrollWidth - volumeScroll.offsetWidth) * volumeControl.value / 9;
+    // calls adjustVolume() in most cases
+}
+
+function adjustVolume() {
+    volumeControl.value = Math.round(volumeScroll.scrollLeft * 9 / (volumeScroll.scrollWidth - volumeScroll.offsetWidth));
+    //debug('adjustVolume ' + volumeControl.value);
+    volume = volumeControl.value / 9;
+    propagadeVolume(volume);
+    saveConfig();
+}
+
+function propagadeVolume(volume) {
+    for (var i = 0, spell; spell = attackSpells[i++];) {
+        if (spell.audio) {
+            if (volume >= 0) {
+                spell.audio.volume = volume;
+            } else {
+                spell.audio.pause();
+            }
+        }
+    }
 }
 
 function resize() {
@@ -506,6 +523,7 @@ function start() {
 function stop() {
     //debug('stop');
     clearTimeout(timeout);
+    propagadeVolume(-1);
     startButton.innerHTML = 'Start!';
     startButton.onclick = start;
     welcomeBlock.className = 'visible';
@@ -582,7 +600,10 @@ function loadConfig(useCookie) {
     }
     setSpells();
     setColors();
-    setSpeed(); // calls adjustSpeed() and saveConfig()
+    setSpeed();
+    adjustSpeed(); // calls saveConfig()
+    setVolume();
+    adjustVolume(); // calls saveConfig()
 }
 
 function Spell(name, control, factorControl, shield, category) {
@@ -615,6 +636,19 @@ function Spell(name, control, factorControl, shield, category) {
     }
     if (this.isAttack) {
         attackSpells.push(this);
+        var audio = document.createElement('audio');
+        var audioName = 'audio/' + name.split(' ').join('');
+        var src;
+        if (audio.canPlayType('audio/mpeg')) {
+            src = audioName + '.mp3';
+        } else if (audio.canPlayType('audio/ogg')) {
+            src = audioName + '.ogg';
+        }
+        if (src) {
+            audio.src = src;
+            audio.load();
+            this.audio = audio;
+        }
     }
     if (this.isShield) {
         shieldSpells.push(this);
@@ -653,7 +687,7 @@ function createSpellBlock(table, data, category, on) {
                 if (found) {
                     minLevel = i;
                     break;
-                } else{
+                } else {
                     found = true;
                 }
             }
@@ -738,12 +772,16 @@ function main() {
     resetButton = document.getElementById('resetButtonID');
     spellSelector = document.getElementById('spellSelectorID');
     speedScroll = document.getElementById('speedScrollID');
+    volumeScroll = document.getElementById('volumeScrollID');
     attackForegroundDisplay = document.getElementById('attackForegroundDisplayID');
     attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
     defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
     defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplayID');
     // Initial settings
     timeout = null;
+    allSpells = [];
+    attackSpells = [];
+    shieldSpells = [];
     stop();
     toggleSelectionBlock();
     attackGenerator = new SpellGenerator();
@@ -756,6 +794,7 @@ function main() {
     // Create config
     config = {};
     configureParameter('speed', 3);
+    configureParameter('volume', 5);
     configureParameter('attack', true);
     configureParameter('defence', true);
     configureParameter('attackForeground', 'green');
@@ -766,15 +805,12 @@ function main() {
     configureParameter('fontBold', true);
     configureParameter('fontItalic', false);
     // Configure spell selector
-    allSpells = [];
-    attackSpells = [];
-    shieldSpells = [];
     spellsNeedingShields = [];
     spellSelector.deleteCell(0);
     for (var i = 0, column; column = SPELLS[i++];) {
         var cell = spellSelector.insertCell(-1);
         cell.className = 'column';
-        cell.innerHTML = '<table cellspacing="0" cellpadding="0"><\/table>';
+        cell.innerHTML = '<table><\/table>';
         var columnBlock = spellSelector.lastChild.firstChild;
         for (var j = 0, section; section = column[j++];) {
             createSpellSection(columnBlock, section, null, (i > 1) ? null : [true, false]);
@@ -800,15 +836,17 @@ function main() {
     loadConfig(true);
     speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
     speedScroll.onscroll = adjustSpeed;
+    volumeScroll.style.height = volumeScroll.offsetHeight - volumeScroll.clientHeight + 'px';
+    volumeScroll.onscroll = adjustVolume;
     document.getElementsByTagName('body')[0].removeAttribute('onload'); // Don't even try to work after saving modified page
 }
 </script>
 </head>
 <body onload="main()">
-  <table id="loadingBlockID" class="visible" cellspacing="0" cellpadding="0">
+  <table id="loadingBlockID" class="visible">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.04</h1>
+        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.1</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
@@ -823,29 +861,31 @@ function main() {
       </td>
     </tr>
   </table>
-  <table id="mainBlockID" class="invisible" cellspacing="0" cellpadding="0">
+  <table id="mainBlockID" class="invisible">
     <tr>
       <td id="headerBlockID">
-        <table id="headerTable" cellspacing="0" cellpadding="0">
+        <table id="headerTable">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer/DH2013<br>v1.04</td>
+            <td id="headerTitle">SpellTrainer/DH2013<br>v1.1</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
-              <table align="right" cellspacing="0" cellpadding="0">
+              <table>
                 <tr>
                   <td>
-                    <table cellspacing="0" cellpadding="0">
+                    <table>
                       <tr>
-                        <td class="menu padleft">Tempo <input id="speedControlID" class="menu input" type="text" maxlength="2" onchange="setSpeed(); saveConfig()"> <span class="light">1 slowest, 10 fastest</span></td>
+                        <td class="menu padleft right">Tempo <input id="speedControlID" class="menu input" type="text" maxlength="1" onchange="setSpeed()"></td>
+                        <td class="menu padleft"><div id="speedScrollID"><div id="speedFill">&nbsp;</div></div></td>
                         <td class="menu padleft right">Attack</td>
                         <td class="menu"><input id="attackControlID" class="checkbox" type="checkbox" onclick="setMode(this); saveConfig()"></td>
                         <td class="menu"><input id="attackForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"><span id="attackForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="attackBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="attackBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"></td>
                         <td colspan="4" class="menu padleft">Font <input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont(); saveConfig()"></td>
                       </tr>
                       <tr>
-                        <td class="menu padleft"><div id="speedScrollID"><div id="speedFill">&nbsp;</div></div></td>
+                        <td class="menu padleft right">Volume <input id="volumeControlID" class="menu input" type="text" maxlength="1" onchange="setVolume()"></td>
+                        <td class="menu padleft"><div id="volumeScrollID"><div id="volumeFill">&nbsp;</div></div></td>
                         <td class="menu padleft right">Defence</td>
                         <td class="menu"><input id="defenceControlID" class="checkbox" type="checkbox" onclick="setMode(this); saveConfig()"></td>
                         <td class="menu"><input id="defenceForegroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"><span id="defenceForegroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span> on <span id="defenceBackgroundDisplayID" class="input">&nbsp;&nbsp;&nbsp;</span><input id="defenceBackgroundControlID" class="menu input" type="text" maxlength="20" onchange="setColors(); saveConfig()"></td>
@@ -866,28 +906,34 @@ function main() {
     </tr>
     <tr>
       <td id="selectionBlockID">
-        <table id="selectionTable" cellspacing="0" cellpadding="0">
+        <table id="selectionTable">
           <tr id="spellSelectorID"><td></td></tr>
         </table>
       </td>
     </tr>
     <tr>
-      <td id="welcomeBlockID" class="visible">
-        <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.04</h1>
-        <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
-        <p><img class="logo" src="wand.png" alt=""></p>
-        <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
-        <p>Adjust the settings at the top bar as neccessary and press</p>
-        <p><button id="bigStartButton" type="button" onclick="start()">Start!</button></p>
-        <p class="bold">Click anywhere in the spell window to stop and return to this screen.</p>
-        <p>When you see a spell written in <span class="example attack">&nbsp;attack colors&nbsp;</span> &ndash; cast it at your imaginary opponent.</p>
-        <p>When you see a spell written in <span class="example defence">&nbsp;defence colors&nbsp;</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield.</p>
-        <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.<br>You may adjust tempo factors for individual spells to give yourself more or less time for those spells.</p>
-        <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
-        <p class="bold">Good luck!</p>
-        <p><br><a href="http://validator.w3.org/check?uri=referer" title="Valid HTML 4.01 Transitional"><img class="valid" src="validhtml401.png" alt="Valid HTML 4.01 Transitional"></a> <a href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS 2.1"><img class="valid" src="validcss.gif" alt="Valid CSS 2.1"></a></p>
+      <td id="centerBlockID">
+        <table id="centerTable">
+          <tr>
+            <td id="welcomeBlockID" class="visible">
+              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.1</h1>
+              <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
+              <p><img class="logo" src="wand.png" alt=""></p>
+              <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
+              <p>Adjust the settings at the top bar as neccessary and press</p>
+              <p><button id="bigStartButton" type="button" onclick="start()">Start!</button></p>
+              <p class="bold">Click anywhere in the spell window to stop and return to this screen.</p>
+              <p>When you see a spell written in <span class="example attack">&nbsp;attack colors&nbsp;</span> &ndash; cast it at your imaginary opponent.</p>
+              <p>When you see a spell written in <span class="example defence">&nbsp;defence colors&nbsp;</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield.</p>
+              <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.<br>You may adjust tempo factors for individual spells to give yourself more or less time for those spells.</p>
+              <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
+              <p class="bold">Good luck!</p>
+              <p><br><a href="http://validator.w3.org/check?uri=referer" title="Valid HTML 4.01 Transitional"><img class="valid" src="validhtml401.png" alt="Valid HTML 4.01 Transitional"></a> <a href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS 2.1"><img class="valid" src="validcss.gif" alt="Valid CSS 2.1"></a></p>
+            </td>
+            <td id="castBlockID" class="invisible" onclick="stop()"></td>
+          </tr>
+        </table>
       </td>
-      <td id="castBlockID" class="invisible" onclick="stop()"></td>
     </tr>
     <tr>
       <td id="footerBlockID">
