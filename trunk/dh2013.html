@@ -409,7 +409,7 @@ function castSpell() {
     debug((isAttack ? 'Attack' : 'Defence') + ': ' + spellName + (!spell || isAttack ? '' : ' / ' + spell.shield.name) + ' (' + Math.round(delay / 10) / 100 + ')');
     castBlock.className = (isAttack ? 'attack' : 'defence');
     castBlock.innerHTML = spellName;
-    if (spell && spell.audio && volume >= 0.1) {
+    if (!isAttack && spell && spell.audio && volume >= 0.1) {
         spell.audio.currentTime = 0;
         spell.audio.play();
     }
@@ -846,7 +846,7 @@ function main() {
   <table id="loadingBlockID" class="visible">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.1</h1>
+        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.11</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
@@ -867,7 +867,7 @@ function main() {
         <table id="headerTable">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer/DH2013<br>v1.1</td>
+            <td id="headerTitle">SpellTrainer/DH2013<br>v1.11</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
@@ -916,7 +916,7 @@ function main() {
         <table id="centerTable">
           <tr>
             <td id="welcomeBlockID" class="visible">
-              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.1</h1>
+              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.11</h1>
               <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
               <p><img class="logo" src="wand.png" alt=""></p>
               <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
