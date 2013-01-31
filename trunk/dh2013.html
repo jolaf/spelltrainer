@@ -455,6 +455,7 @@ function createSources(element, actor, actors, spell, type, extension, posterExt
     }
     element.innerHTML = '';
     element.appendChild(createSource(actor, spell, type, extension));
+    element.src = element.firstChild.src;
     for (var i = 0, a; a = actors[i++];) {
         if (a !== actor) {
             element.appendChild(createSource(a, spell, type, extension));
@@ -1000,7 +1001,7 @@ function main() {
   <table id="loadingBlockID" class="visible">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.2</h1>
+        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.21</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
@@ -1021,7 +1022,7 @@ function main() {
         <table id="headerTable">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer/DH2013<br>v1.2</td>
+            <td id="headerTitle">SpellTrainer/DH2013<br>v1.21</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
@@ -1072,7 +1073,7 @@ function main() {
         <table id="centerTable">
           <tr>
             <td id="welcomeBlockID" class="visible">
-              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.2</h1>
+              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.21</h1>
               <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
               <p><img class="logo" src="wand.png" alt=""></p>
               <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
@@ -1086,7 +1087,7 @@ function main() {
             <td id="readyBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
             <td id="attackBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
             <td id="defenceBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
-            <td id="videoBlockID" class="invisible" onclick="stop()"><video muted></video></td>
+            <td id="videoBlockID" class="invisible" onclick="stop()"><video muted preload autoplay></video></td>
           </tr>
         </table>
       </td>
