@@ -1,2 +1,3 @@
-DirectoryIndex spelltrainer.html
 AddDefaultCharset Off
+AddType video/webm webm
+DirectoryIndex spelltrainer.html
