@@ -48,11 +48,24 @@ p, td {
 	background-color: black;
 }
 
-.cast {
+.attack {
+	color: green;
+	background-color: black;
 }
 
-table.center {
-	margin: 0 auto;
+.defence {
+	color: white;
+	background-color: maroon;
+}
+
+.flash {
+	color: white;
+	background-color: white;
+}
+
+.example {
+	font-weight: bold;
+	padding: 3px;
 }
 
 table.visible {
@@ -114,11 +127,7 @@ input.input {
 	width: 4em;
 }
 
-input.factor {
-	width: 2em;
-}
-
-input.menu, select.menu {
+input.menu {
 	font-size: 100%;
 	padding: 1px;
 }
@@ -137,10 +146,6 @@ img.valid {
 	width: 88px;
 	height: 31px;
 	border: 0;
-}
-
-video {
-	height: 100%;
 }
 
 #headerBlockID, #selectionBlockID, #footerBlockID {
@@ -176,28 +181,19 @@ video {
 	white-space: nowrap;
 }
 
-#loadingBlockID, #mainBlockID, #infoBlockID, #centerBlockID, #centerTable,
-#welcomeBlockID, #flashBlockID, #readyBlock, #attackBlockID, #defenceBlockID, #videoBlockID {
+#loadingBlockID, #mainBlockID, #infoBlockID, #centerBlockID, #centerTable, #welcomeBlockID, #castBlockID {
 	width: 100%;
 	height: 100%;
 }
 
-#loadingBlockID, #infoBlockID, #centerBlockID, #centerTable,
-#welcomeBlockID, #flashBlockID, #readyBlock, #attackBlockID, #defenceBlockID, #videoBlockID {
-	text-align: center;
-}
-
 #infoBlockID, #welcomeBlockID {
 	color: black;
+	text-align: center;
 	white-space: nowrap;
 }
 
 #startButtonID {
 	width: 9ex;
-}
-
-#audioActorControlID, #videoActorControlID {
-	width: 12ex;
 }
 
 #speedScrollID, #volumeScrollID {
@@ -220,29 +216,9 @@ video {
 	width: 5em;
 }
 
-#flashBlockID {
-	color: white;
-	background-color: white;
-}
-
-#readyBlockID {
-	color: white;
-	background-color: black;
-}
-
-#attackBlockID {
-	color: green;
-	background-color: black;
-}
-
-#defenceBlockID {
-	color: white;
-	background-color: maroon;
-}
-
-#videoBlockID {
-	color: black;
-	background-color: black;
+#castBlockID {
+	text-align: center;
+	font-weight: bold;
 }
 
 #bigStartButton {
@@ -257,32 +233,17 @@ video {
 	height: 38px;
 	font-size: 50%;
 	overflow: auto;
-	text-align: left;
 }
-
-#supportedAudioID, #supportedVideoID {
-	text-align: right;
-	font-weight: bold;
-}
-
 </style>
 <script type="text/javascript">
 var SERIES_LENGTH = [3, 5];
 var SERIES_DELAY = 3;
 var RULE_OF_N_SPELLS = 3;
-
 var DEFAULT_FONT_NAME = 'Verdana,Arial,Helvetica,sans-serif';
 var MIN_FONT_SIZE = 20;
 var COOKIE_NAME = 'SpellTrainer/DH2013';
 var GET_READY = 'Get ready!';
 var NO_SPELLS = 'select spells';
-var RANDOM = 'random';
-var DT = 100;
-
-var AUDIO_TYPES = [['audio/mpeg', 'mp3'], ['audio/ogg', 'ogg']];
-var AUDIO_ACTORS = ['Jolaf'];
-var VIDEO_TYPES = [['video/mp4', 'mp4'], ['video/webm', 'webm']];
-var VIDEO_ACTORS = ['Aika', 'Clair'];
 
 var SPELLS = [
       [['Basic', null, [
@@ -321,6 +282,11 @@ function getStyle(selector) {
     }
 }
 
+function baseSpellName(spell) {
+    baseIndex = spell.name.indexOf(' ');
+    return baseIndex >= 0 ? spell.name.slice(0, baseIndex) : spell.name;
+}
+
 function SpellGenerator() {
     this.spells = [];
     this.previousSpells = [];
@@ -331,20 +297,22 @@ function SpellGenerator() {
         newSpell:
         while (true) {
             spell = this.spells[Math.floor(Math.random() * this.spells.length)];
+            baseSpell = baseSpellName(spell);
             if (this.spells.length >= RULE_OF_N_SPELLS) {
                 for (var i = 0, previousSpell; previousSpell = this.previousSpells[i++];) {
-                    if (previousSpell === spell) {
+                    if (previousSpell === baseSpell) {
                         continue newSpell;
                     }
                 }
             }
-            this.previousSpells = this.previousSpells.concat([spell]).slice(-RULE_OF_N_SPELLS + 1);
+            this.previousSpells = this.previousSpells.concat([baseSpell]).slice(-RULE_OF_N_SPELLS + 1);
             return spell;
         }
     }
 }
 
 function toggleSelectionBlock() {
+    //debug('toggleSelectionBlock');
     if (selectionBlock.className === 'invisible') {
         selectionBlock.className = 'visible';
         selectionButton.innerHTML = 'Select Spells<br>&uarr; &uarr; &uarr;';
@@ -352,9 +320,11 @@ function toggleSelectionBlock() {
         selectionBlock.className = 'invisible';
         selectionButton.innerHTML = 'Select Spells<br>&darr; &darr; &darr;';
     }
+    setFont();
 }
 
 function setMode(element) {
+    //debug('setMode');
     if (!attackControl.checked && !defenceControl.checked) {
         (element || attackControl).checked = true;
     }
@@ -364,14 +334,8 @@ function validateFactor(element) {
     if (!element) {
         return;
     }
-    element.value = parseFloat(element.value);
-    if (isNaN(element.value) || element.value < 1) {
-        element.value = 1;
-    } else if (element.value > 9.9) {
-        element.value = 9.9;
-    } else {
-        element.value = Math.round(element.value * 10) / 10;
-    }
+    //debug('validateFactor');
+    element.value = Math.round((parseFloat(element.value) || 1) * 10) / 10;
 }
 
 function setSpellControl(spell, value) {
@@ -416,11 +380,12 @@ function setCategoryControl(spell, value) {
 }
 
 function setSpells(element) {
+    //debug('setSpells');
     if (element) {
         setSpellControl(element.spell, element.checked);
         setCategoryControl(element.spell, element.checked);
     }
-    if (!started) {
+    if (castBlock.className === 'invisible') {
         return;
     }
     attackGenerator.spells = [];
@@ -436,92 +401,28 @@ function setSpells(element) {
     setFont();
 }
 
-function createSources(element, actor, actors, spell, type, extension, posterExtension) {
-    function createName(actor, spell, extension) {
-        return actor.toLowerCase() + '/' + spell + '.' + extension;
-    }
-    function createSource(actor, spell, type, extension) {
-        var source= document.createElement('source');
-        source.src = createName(actor, spell, extension);
-        if (type) {
-            source.type = type;
-        }
-        return source;
-    }
-    spell = spell.split(' ').join('');
-    if (actor === RANDOM) {
-        actor = actors[Math.floor(Math.random() * actors.length)];
-    }
-    if (posterExtension) {
-        element.poster = createName(actor, spell, posterExtension);
-    }
-    //element.innerHTML = '';
-    //element.appendChild(createSource(actor, spell, '', extension));
-    //element.appendChild(createSource(actor, spell, type, extension));
-    element.src = createName(actor, spell, extension); //element.firstChild.src;
-    //for (var i = 0, a; a = actors[i++];) {
-    //    if (a !== actor) {
-    //        element.appendChild(createSource(a, spell, type, extension));
-    //    }
-    //}
-}
-
-function playAudio(spell) {
-    var audio = document.createElement('audio');
-    createSources(audio, audioActor, AUDIO_ACTORS, spell, audioType, audioExtension);
-    audio.load();
-    audio.volume = volume;
-    audio.play();
-}
-
-function playVideo(spell, time) {
-    //videoTimeout = new Date().getTime() + time;
-    createSources(videoTag, videoActor, VIDEO_ACTORS, spell, videoType, videoExtension);//, 'jpg');
-    videoTag.load();
-    videoTag.play(); // startPlayVideo();
-    setActiveBlock(videoBlock);
-}
-
-function startPlayVideo() { // for accellerated playback, doesn't work effectively
-    var timeLeft = videoTimeout - new Date().getTime();
-    var duration = video.duration * 1000;
-    if (isNaN(duration) && timeLeft > DT) {
-        setTimeout(startPlayVideo, DT);
-    } else {
-        var rate = (isFinite(duration) && duration > timeLeft) ? duration / timeLeft : 1;
-        videoTag.defaultPlaybackRate = rate;
-        videoTag.playbackRate = rate;
-        videoTag.play();
-        videoTag.defaultPlaybackRate = rate;
-        videoTag.playbackRate = rate;
-    }
-}
-
 function castSpell() {
     var isAttack = (attackControl.checked && (!defenceControl.checked || Math.random() >= 0.5));
     var spell = (isAttack ? attackGenerator : defenceGenerator).next();
     var spellName = (spell ? spell.name : NO_SPELLS);
     var delay = spellDelay * (spell ? isAttack ? spell.factorControl.value : spell.shield.factorControl.value : 2);
     debug((isAttack ? 'Attack' : 'Defence') + ': ' + spellName + (!spell || isAttack ? '' : ' / ' + spell.shield.name) + ' (' + Math.round(delay / 10) / 100 + ')');
-    if (!isAttack && spell && videoType && videoActor) {
-        playVideo(spellName, delay);
-    } else {
-        var block = (isAttack ? attackBlock : defenceBlock);
-        block.firstChild.innerHTML = spellName;
-        setActiveBlock(block);
-    }
-    if (!isAttack && spell && audioType && audioActor && volume >= 0.1) {
-        playAudio(spellName);
+    castBlock.className = (isAttack ? 'attack' : 'defence');
+    castBlock.innerHTML = spellName;
+    if (!isAttack && spell && spell.audio && volume >= 0.1) {
+        spell.audio.currentTime = 0;
+        spell.audio.play();
     }
     timeout = setTimeout('hideSpell()', delay);
 }
 
 function hideSpell() {
-    setActiveBlock(flashBlock);
+    castBlock.className = 'flash';
     timeout = setTimeout('castSpell()', 100);
 }
 
 function setColors() {
+    //debug('setColors');
     function doSetColors(style, field, display, control, defaultValue) {
         try { // Throws exception on IE if color value is incorrect
             style[field] = display.style.backgroundColor = control.value;
@@ -535,117 +436,107 @@ function setColors() {
     doSetColors(defenceStyle, 'backgroundColor', defenceBackgroundDisplay, defenceBackgroundControl, 'black');
 }
 
-function setAudioActor() {
-    audioActor = audioActorControl.value;
-    //volumeControl.disabled = audioActor ? false : true;
-    //volumeFill.style.width = audioActor ? '1000px' : 0;
-    saveConfig();
-}
-
-function setVideoActor() {
-    videoActor = videoActorControl.value;
-    saveConfig();
-}
-
 function setSpeed() {
-    speedControl.value = parseInt(speedControl.value);
-    if (isNaN(speedControl.value) || speedControl.value < 1) {
-        speedControl.value = 1;
-    } else if (speedControl.value > 9) {
-        speedControl.value = 9;
-    }
+    //debug('setSpeed');
     speedScroll.scrollLeft = (speedScroll.scrollWidth - speedScroll.offsetWidth) * (speedControl.value - 1) / 8;
     // calls adjustSpeed() in most cases
 }
 
 function adjustSpeed() {
-    speedControl.value = 1 + (speedScroll.scrollWidth > speedScroll.offsetWidth ? Math.round(speedScroll.scrollLeft * 8 / (speedScroll.scrollWidth - speedScroll.offsetWidth)) : 0);
+    speedControl.value = 1 + Math.round(speedScroll.scrollLeft * 8 / (speedScroll.scrollWidth - speedScroll.offsetWidth));
+    //debug('adjustSpeed ' + speedControl.value);
     spellDelay = 6000 / speedControl.value;
     saveConfig();
 }
 
 function setVolume() {
-    volumeControl.value = parseInt(volumeControl.value);
-    if (isNaN(volumeControl.value) || volumeControl.value < 0) {
-        volumeControl.value = 0;
-    } else if (volumeControl.value > 9) {
-        volumeControl.value = 9;
-    }
+    //debug('setVolume');
     volumeScroll.scrollLeft = (volumeScroll.scrollWidth - volumeScroll.offsetWidth) * volumeControl.value / 9;
     // calls adjustVolume() in most cases
 }
 
 function adjustVolume() {
-    volumeControl.value = volumeScroll.scrollWidth > volumeScroll.offsetWidth ? Math.round(volumeScroll.scrollLeft * 9 / (volumeScroll.scrollWidth - volumeScroll.offsetWidth)) : 0;
+    volumeControl.value = Math.round(volumeScroll.scrollLeft * 9 / (volumeScroll.scrollWidth - volumeScroll.offsetWidth));
+    //debug('adjustVolume ' + volumeControl.value);
     volume = volumeControl.value / 9;
+    propagadeVolume(volume);
     saveConfig();
 }
 
-function resize() {
-    castStyle.fontSize = MIN_FONT_SIZE;
-    castStyle.fontSize = Math.floor(Math.min(centerBlock.offsetHeight * 0.7, centerBlock.offsetWidth * aspect)) + 'px';
+function propagadeVolume(volume) {
+    for (var i = 0, spell; spell = attackSpells[i++];) {
+        if (spell.audio) {
+            if (volume >= 0) {
+                spell.audio.volume = volume;
+            } else {
+                spell.audio.pause();
+            }
+        }
+    }
 }
 
-function setActiveBlock(block) {
-    var ret;
-    for (var i = 0, b; b = blocks[i++];) {
-        if (b.className === 'visible') {
-            ret = b;
-        }
-        b.className = (b === block) ? 'visible' : 'invisible';
-    }
-    return b;
+function resize() {
+    //debug('resize');
+    castBlock.style.fontSize = MIN_FONT_SIZE;
+    castBlock.style.fontSize = Math.floor(Math.min(castBlock.offsetHeight * 0.7, castBlock.offsetWidth * aspect)) + 'px';
 }
 
 function setFont() {
-    if (!started) {
+    if (castBlock.className === 'invisible') {
         return;
     }
-    var savedBlock = setActiveBlock(flashBlock);
+    //debug('setFont');
+    var savedClass = castBlock.className;
+    var savedContent = castBlock.innerHTML;
     var spells = attackGenerator.spells.concat(defenceGenerator.spells, [GET_READY, NO_SPELLS]);
-    castStyle.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
-    castStyle.fontWeight = fontBoldControl.checked ? 'bold' : 'normal';
-    castStyle.fontStyle = fontItalicControl.checked ? 'italic' : 'normal';
-    castStyle.fontSize = MIN_FONT_SIZE;
+    castBlock.className = 'flash';
+    castBlock.style.fontFamily = fontFamilyControl.value + ',' + DEFAULT_FONT_NAME;
+    castBlock.style.fontWeight = fontBoldControl.checked ? 'bold' : 'normal';
+    castBlock.style.fontStyle = fontItalicControl.checked ? 'italic' : 'normal';
+    castBlock.style.fontSize = MIN_FONT_SIZE;
+    castBlock.innerHTML = '<span id="test"><\/span>';
+    var test = document.getElementById('test');
     aspect = 1000;
-    var testArea = flashBlock.firstChild;
     for (var i = 0, spell; spell = spells[i++];) {
-        testArea.innerHTML = (spell.name || spell);
-        aspect = Math.min(aspect, testArea.offsetHeight / testArea.offsetWidth);
+        test.innerHTML = (spell.name || spell);
+        aspect = Math.min(aspect, test.offsetHeight / test.offsetWidth);
     }
-    testArea.innerHTML = '';
     aspect *= 0.7;
     resize();
-    setActiveBlock(savedBlock);
+    castBlock.innerHTML = savedContent;
+    castBlock.className = savedClass;
 }
 
 function start() {
+    //debug('start');
     startButton.innerHTML = 'Stop';
     startButton.onclick = stop;
-    setActiveBlock(flashBlock);
-    started = true;
+    welcomeBlock.className = 'invisible';
+    castBlock.className = 'flash';
     setSpells();
-    setActiveBlock(readyBlock);
+    castBlock.innerHTML = GET_READY;
     body.onresize = onresize = resize;
+    castBlock.className = 'ready';
     timeout = setTimeout('hideSpell()', spellDelay);
 }
 
 function stop() {
+    //debug('stop');
     clearTimeout(timeout);
-    started = false;
-    body.onresize = onresize = null;
+    propagadeVolume(-1);
     startButton.innerHTML = 'Start!';
     startButton.onclick = start;
-    setActiveBlock(welcomeBlock);
+    welcomeBlock.className = 'visible';
+    castBlock.className = 'invisible';
+    body.onresize = onresize = null;
 }
 
 function Parameter(control, defaultValue) {
     this.control = control;
     this.defaultValue = defaultValue;
-    this.isSelect = (this.control.nodeName === 'SELECT');
     this.isBoolean = (typeof this.defaultValue === 'boolean');
     this.isNumber = (typeof this.defaultValue === 'number');
-    this.isInteger = (this.isNumber && this.defaultValue % 1 === 0);
+    this.isInteger = (this.isNumber && this.defaultValue % 1 == 0);
     this.isFloat = (this.isNumber && !this.isInteger);
 
     this.get = function() {
@@ -653,11 +544,7 @@ function Parameter(control, defaultValue) {
     }
 
     this.set = function(value) {
-        if (this.isSelect) {
-            for (var i = 0, option; option = this.control.children[i++];) {
-                 option.selected = (option.value === value ? 'selected' : '');
-            }
-        } else if (this.isBoolean) {
+        if (this.isBoolean) {
             this.control.checked = (value === true || value === 'true');
         } else {
             this.control.value = (this.isInteger ? parseInt(value) : this.isFloat ? parseFloat(value) : value);
@@ -672,6 +559,7 @@ function configureParameter(parameter, defaultValue) {
 }
 
 function saveConfig() {
+    //debug('saveConfig');
     var items = [];
     for (var name in config) {
         var parameter = config[name];
@@ -686,6 +574,7 @@ function saveConfig() {
 }
 
 function loadConfig(useCookie) {
+    //debug('loadConfig(' + useCookie + ')');
     var fromCookie = {};
     if (useCookie) {
         var items = [];
@@ -693,14 +582,14 @@ function loadConfig(useCookie) {
         var cookies = document.cookie.split(';');
         for (var i = 0; i < cookies.length; i++) {
             var cookie = cookies[i].split(' ').join('');
-            if (cookie.indexOf(lookFor) === 0) {
+            if (cookie.indexOf(lookFor) == 0) {
                 items = unescape(cookie.substring(lookFor.length)).split(';');
                 break;
             }
         }
         for (var i = 0; i < items.length; i++) {
             var item = items[i].split('=');
-            if (item.length === 2) {
+            if (item.length == 2) {
                 fromCookie[unescape(item[0].split(' ').join(''))] = unescape(item[1].split(' ').join(''));
             }
         }
@@ -711,8 +600,6 @@ function loadConfig(useCookie) {
     }
     setSpells();
     setColors();
-    setAudioActor();
-    setVideoActor();
     setSpeed();
     adjustSpeed(); // calls saveConfig()
     setVolume();
@@ -721,7 +608,7 @@ function loadConfig(useCookie) {
 
 function Spell(name, control, factorControl, shield, category) {
     this.setShield = function(shield) {
-        this.shield = (shield === true || this.isCategory ? null : shield ? shield : (this.category && this.category.isShield) ? this.category : null);
+        this.shield = (shield == true || this.isCategory ? null : shield ? shield : (this.category && this.category.isShield) ? this.category : null);
         if (this.shield && typeof this.shield === 'object') {
             if (!this.shield.isShield) {
                 this.shield.isShield = true;
@@ -749,6 +636,19 @@ function Spell(name, control, factorControl, shield, category) {
     }
     if (this.isAttack) {
         attackSpells.push(this);
+        var audio = document.createElement('audio');
+        var audioName = 'audio/' + name.split(' ').join('');
+        var src;
+        if (audio.canPlayType('audio/mpeg')) {
+            src = audioName + '.mp3';
+        } else if (audio.canPlayType('audio/ogg')) {
+            src = audioName + '.ogg';
+        }
+        if (src) {
+            audio.src = src;
+            audio.load();
+            this.audio = audio;
+        }
     }
     if (this.isShield) {
         shieldSpells.push(this);
@@ -812,7 +712,7 @@ function createSpellBlock(table, data, category, on) {
         if (spellName && factor) {
             cell = row.insertCell(-1);
             cell.className = className;
-            cell.innerHTML = '<input class="menu input factor" type="text" maxLength="3" onchange="validateFactor(this); saveConfig()">';
+            cell.innerHTML = '<input class="menu input" type="text" maxlength="4" onchange="validateFactor(this); saveConfig()">';
             factorControl = cell.firstChild;
         }
         if (control || factorControl) {
@@ -857,30 +757,16 @@ function createSpellSection(columnBlock, section, superSectionObjects, on) {
     }
 }
 
-function appendSelectOption(select, name) {
-    var option = document.createElement('option');
-    option.appendChild(document.createTextNode(name));
-    select.appendChild(option);
-}
-
 function main() {
-    // HTML references
     logger = document.getElementById('loggerBlockID');
-    castStyle = getStyle('.cast');
-    attackStyle = getStyle('#attackBlockID');
-    defenceStyle = getStyle('#defenceBlockID');
+    //debug('main');
+    // HTML references
+    attackStyle = getStyle('.attack');
+    defenceStyle = getStyle('.defence');
     body = document.getElementsByTagName('body')[0];
-    loadingBlock = document.getElementById('loadingBlockID');
-    mainBlock = document.getElementById('mainBlockID');
     selectionBlock = document.getElementById('selectionBlockID');
-    centerBlock = document.getElementById('centerBlockID');
     welcomeBlock = document.getElementById('welcomeBlockID');
-    flashBlock = document.getElementById('flashBlockID');
-    readyBlock = document.getElementById('readyBlockID'); readyBlock.firstChild.innerHTML = GET_READY;
-    attackBlock = document.getElementById('attackBlockID');
-    defenceBlock = document.getElementById('defenceBlockID');
-    videoBlock = document.getElementById('videoBlockID');
-    blocks = [welcomeBlock, flashBlock, readyBlock, attackBlock, defenceBlock, videoBlock];
+    castBlock = document.getElementById('castBlockID');
     startButton = document.getElementById('startButtonID');
     selectionButton = document.getElementById('selectionButtonID');
     resetButton = document.getElementById('resetButtonID');
@@ -891,9 +777,6 @@ function main() {
     attackBackgroundDisplay = document.getElementById('attackBackgroundDisplayID');
     defenceForegroundDisplay = document.getElementById('defenceForegroundDisplayID');
     defenceBackgroundDisplay = document.getElementById('defenceBackgroundDisplayID');
-    supportedAudio = document.getElementById('supportedAudioID');
-    supportedVideo = document.getElementById('supportedVideoID');
-    videoTag = document.getElementsByTagName('video')[0];
     // Initial settings
     timeout = null;
     allSpells = [];
@@ -910,8 +793,6 @@ function main() {
     }
     // Create config
     config = {};
-    configureParameter('videoActor', RANDOM);
-    configureParameter('audioActor', RANDOM);
     configureParameter('speed', 3);
     configureParameter('volume', 5);
     configureParameter('attack', true);
@@ -938,7 +819,7 @@ function main() {
     // Link remaining shields
     for (var i = 0, spell; spell = spellsNeedingShields[i++];) {
         for (var j = 0, shieldSpell; shieldSpell = allSpells[j++];) {
-            if (shieldSpell.name === spell.shield) {
+            if (shieldSpell.name == spell.shield) {
                 spell.setShield(shieldSpell);
                 break;
             }
@@ -949,54 +830,15 @@ function main() {
     }
     delete allSpells;
     delete spellsNeedingShields;
-    // Setting up audio and video
-    audioType = audioExtension = null;
-    var audio = document.createElement('audio');
-    for (var i = 0, t; t = AUDIO_TYPES[i++];) {
-        if (audio.canPlayType(t[0])) {
-            audioType = t[0];
-            audioExtension = t[1];
-            break;
-        }
-    }
-    if (audioType) {
-        appendSelectOption(audioActorControl, RANDOM);
-        for (var i = 0, actor; actor = AUDIO_ACTORS[i++];) {
-          appendSelectOption(audioActorControl, actor);
-        }
-        supportedAudio.innerHTML = audioExtension.toUpperCase();
-    } else {
-        audioActorControl.disabled = true;
-        volumeFill.style.width = 0;
-        volumeControl.disabled = true;
-    }
-    videoType = videoExtension = null;
-    var video = document.createElement('video');
-    for (var i = 0, t; t = VIDEO_TYPES[i++];) {
-        if (video.canPlayType(t[0])) {
-            videoType = t[0];
-            videoExtension = t[1];
-            break;
-        }
-    }
-    if (videoType) {
-        appendSelectOption(videoActorControl, RANDOM);
-        for (var i = 0, actor; actor = VIDEO_ACTORS[i++];) {
-          appendSelectOption(videoActorControl, actor);
-        }
-        supportedVideo.innerHTML = videoExtension.toUpperCase();
-    } else {
-        videoActorControl.disabled = true;
-    }
     // Show main page
-    loadingBlockID.className = 'invisible';
-    mainBlock.className = 'visible';
+    document.getElementById('loadingBlockID').className = 'invisible';
+    document.getElementById('mainBlockID').className = 'visible';
     loadConfig(true);
     speedScroll.style.height = speedScroll.offsetHeight - speedScroll.clientHeight + 'px';
     speedScroll.onscroll = adjustSpeed;
     volumeScroll.style.height = volumeScroll.offsetHeight - volumeScroll.clientHeight + 'px';
     volumeScroll.onscroll = adjustVolume;
-    body.removeAttribute('onload'); // Don't even try to work after saving modified page
+    document.getElementsByTagName('body')[0].removeAttribute('onload'); // Don't even try to work after saving modified page
 }
 </script>
 </head>
@@ -1004,7 +846,7 @@ function main() {
   <table id="loadingBlockID" class="visible">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.23</h1>
+        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.11</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
@@ -1025,7 +867,7 @@ function main() {
         <table id="headerTable">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer/DH2013<br>v1.23</td>
+            <td id="headerTitle">SpellTrainer/DH2013<br>v1.11</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
@@ -1034,8 +876,7 @@ function main() {
                   <td>
                     <table>
                       <tr>
-                        <td class="menu padleft right">Video <select id="videoActorControlID" class="menu input" onchange="setVideoActor()"><option value="">off</option></select></td>
-                        <td class="menu padleft right">Tempo <input id="speedControlID" class="menu input" type="text" maxLength="1" onchange="setSpeed()"></td>
+                        <td class="menu padleft right">Tempo <input id="speedControlID" class="menu input" type="text" maxlength="1" onchange="setSpeed()"></td>
                         <td class="menu padleft"><div id="speedScrollID"><div id="speedFill">&nbsp;</div></div></td>
                         <td class="menu padleft right">Attack</td>
                         <td class="menu"><input id="attackControlID" class="checkbox" type="checkbox" onclick="setMode(this); saveConfig()"></td>
@@ -1043,8 +884,7 @@ function main() {
                         <td colspan="4" class="menu padleft">Font <input id="fontFamilyControlID" class="menu input" type="text" maxlength="32" onchange="setFont(); saveConfig()"></td>
                       </tr>
                       <tr>
-                        <td class="menu padleft right">Audio <select id="audioActorControlID" class="menu input" onchange="setAudioActor()"><option value="">off</option></select></td>
-                        <td class="menu padleft right">Volume <input id="volumeControlID" class="menu input" type="text" maxLength="1" onchange="setVolume()"></td>
+                        <td class="menu padleft right">Volume <input id="volumeControlID" class="menu input" type="text" maxlength="1" onchange="setVolume()"></td>
                         <td class="menu padleft"><div id="volumeScrollID"><div id="volumeFill">&nbsp;</div></div></td>
                         <td class="menu padleft right">Defence</td>
                         <td class="menu"><input id="defenceControlID" class="checkbox" type="checkbox" onclick="setMode(this); saveConfig()"></td>
@@ -1076,21 +916,21 @@ function main() {
         <table id="centerTable">
           <tr>
             <td id="welcomeBlockID" class="visible">
-              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.23</h1>
+              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.11</h1>
               <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
               <p><img class="logo" src="wand.png" alt=""></p>
               <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
               <p>Adjust the settings at the top bar as neccessary and press</p>
               <p><button id="bigStartButton" type="button" onclick="start()">Start!</button></p>
               <p class="bold">Click anywhere in the spell window to stop and return to this screen.</p>
-              <p>Supported audio: <span id="supportedAudioID">None</span> &nbsp; Supported video: <span id="supportedVideoID">None</span></p>
-              <p><a href="http://validator.w3.org/check?uri=referer" title="Valid HTML 4.01 Transitional"><img class="valid" src="validhtml401.png" alt="Valid HTML 4.01 Transitional"></a> <a href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS 2.1"><img class="valid" src="validcss.gif" alt="Valid CSS 2.1"></a></p>
+              <p>When you see a spell written in <span class="example attack">&nbsp;attack colors&nbsp;</span> &ndash; cast it at your imaginary opponent.</p>
+              <p>When you see a spell written in <span class="example defence">&nbsp;defence colors&nbsp;</span> &ndash; it means that spell<br>is cast by your opponent at you, so cast the respective shield.</p>
+              <p>Start with a comfortable tempo, and then increase the pace as your casting skill improves.<br>You may adjust tempo factors for individual spells to give yourself more or less time for those spells.</p>
+              <p>If you experience problems or want to report a bug &ndash; please mail to <a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">vmzakhar@gmail.com</a>.</p>
+              <p class="bold">Good luck!</p>
+              <p><br><a href="http://validator.w3.org/check?uri=referer" title="Valid HTML 4.01 Transitional"><img class="valid" src="validhtml401.png" alt="Valid HTML 4.01 Transitional"></a> <a href="http://jigsaw.w3.org/css-validator/check/referer" title="Valid CSS 2.1"><img class="valid" src="validcss.gif" alt="Valid CSS 2.1"></a></p>
             </td>
-            <td id="flashBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
-            <td id="readyBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
-            <td id="attackBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
-            <td id="defenceBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
-            <td id="videoBlockID" class="invisible" onclick="stop()"><video muted preload autoplay></video></td>
+            <td id="castBlockID" class="invisible" onclick="stop()"></td>
           </tr>
         </table>
       </td>
