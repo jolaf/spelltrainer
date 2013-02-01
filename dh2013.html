@@ -159,6 +159,7 @@ video {
 }
 
 #headerTitle {
+	white-space: nowrap;
 	text-align: center;
 	color: black;
 	font-weight: bold;
@@ -272,16 +273,16 @@ var SERIES_DELAY = 3;
 var RULE_OF_N_SPELLS = 3;
 
 var DEFAULT_FONT_NAME = 'Verdana,Arial,Helvetica,sans-serif';
-var MIN_FONT_SIZE = 20;
+var MIN_FONT_SIZE = '20px';
 var COOKIE_NAME = 'SpellTrainer/DH2013';
 var GET_READY = 'Get ready!';
 var NO_SPELLS = 'select spells';
 var RANDOM = 'random';
 var DT = 100;
 
-var AUDIO_TYPES = [['audio/mpeg', 'mp3'], ['audio/ogg', 'ogg']];
+var AUDIO_TYPES = {'audio/mpeg': 'mp3', 'audio/ogg': 'ogg'};
+var VIDEO_TYPES = {'video/mp4': 'mp4', 'video/webm': 'webm'};
 var AUDIO_ACTORS = ['Jolaf'];
-var VIDEO_TYPES = [['video/mp4', 'mp4'], ['video/webm', 'webm']];
 var VIDEO_ACTORS = ['Aika', 'Clair'];
 
 var SPELLS = [
@@ -308,12 +309,16 @@ var SPELLS = [
     ];
 
 function debug(message) {
-    logger.innerHTML += new Date().toTimeString().split(' ')[0] + '&nbsp;&nbsp;' + message + '<br>';
+    var date = new Date().toTimeString().split(' ')[0];
+    logger.innerHTML += date + '&nbsp;&nbsp;' + message + '<br>';
     logger.scrollTop = logger.scrollHeight;
+    if (console) {
+        console.log(date + ' ' + message);
+    }
 }
 
 function getStyle(selector) {
-    var rules = document.styleSheets[0].cssRules || document.styleSheets[0].rules; // Tries both ways to access CSS
+    var rules = document.styleSheets[0].cssRules || document.styleSheets[0].rules; // trying both ways to access CSS
     for (var i = 0, rule; rule = rules[i++];) {
         if (rule.selectorText === selector) {
             return rule.style;
@@ -436,65 +441,40 @@ function setSpells(element) {
     setFont();
 }
 
-function createSources(element, actor, actors, spell, type, extension, posterExtension) {
-    function createName(actor, spell, extension) {
-        return actor.toLowerCase() + '/' + spell + '.' + extension;
-    }
-    function createSource(actor, spell, type, extension) {
-        var source= document.createElement('source');
-        source.src = createName(actor, spell, extension);
-        if (type) {
-            source.type = type;
-        }
-        return source;
-    }
-    spell = spell.split(' ').join('');
+function getMediaForActor(medias, actors, actor) {
     if (actor === RANDOM) {
-        actor = actors[Math.floor(Math.random() * actors.length)];
+        var availableMedias = [];
+        for (var i in medias) {
+            if (medias[i]) {
+                availableMedias.push(medias[i]);
+            }
+        }
+        return availableMedias[Math.floor(Math.random() * availableMedias.length)];
     }
-    if (posterExtension) {
-        element.poster = createName(actor, spell, posterExtension);
-    }
-    //element.innerHTML = '';
-    //element.appendChild(createSource(actor, spell, '', extension));
-    //element.appendChild(createSource(actor, spell, type, extension));
-    element.src = createName(actor, spell, extension); //element.firstChild.src;
-    //for (var i = 0, a; a = actors[i++];) {
-    //    if (a !== actor) {
-    //        element.appendChild(createSource(a, spell, type, extension));
-    //    }
-    //}
+    return medias[actors.indexOf(actor)];
 }
 
 function playAudio(spell) {
-    var audio = document.createElement('audio');
-    createSources(audio, audioActor, AUDIO_ACTORS, spell, audioType, audioExtension);
-    audio.load();
-    audio.volume = volume;
-    audio.play();
-}
-
-function playVideo(spell, time) {
-    //videoTimeout = new Date().getTime() + time;
-    createSources(videoTag, videoActor, VIDEO_ACTORS, spell, videoType, videoExtension);//, 'jpg');
-    videoTag.load();
-    videoTag.play(); // startPlayVideo();
-    setActiveBlock(videoBlock);
-}
-
-function startPlayVideo() { // for accellerated playback, doesn't work effectively
-    var timeLeft = videoTimeout - new Date().getTime();
-    var duration = video.duration * 1000;
-    if (isNaN(duration) && timeLeft > DT) {
-        setTimeout(startPlayVideo, DT);
-    } else {
-        var rate = (isFinite(duration) && duration > timeLeft) ? duration / timeLeft : 1;
-        videoTag.defaultPlaybackRate = rate;
-        videoTag.playbackRate = rate;
-        videoTag.play();
-        videoTag.defaultPlaybackRate = rate;
-        videoTag.playbackRate = rate;
+    var audio = getMediaForActor(spell.audios, AUDIO_ACTORS, audioActor);
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = volume;
+        audio.play();
     }
+    return Boolean(audio);
+}
+
+function playVideo(spell) {
+    var video = getMediaForActor(spell.videos, VIDEO_ACTORS, videoActor);
+    if (video) {
+        video.pause();
+        video.currentTime = 0;
+        videoBlock.innerHTML = '';
+        videoBlock.appendChild(video);
+        video.play();
+    }
+    return Boolean(video);
 }
 
 function castSpell() {
@@ -503,15 +483,15 @@ function castSpell() {
     var spellName = (spell ? spell.name : NO_SPELLS);
     var delay = spellDelay * (spell ? isAttack ? spell.factorControl.value : spell.shield.factorControl.value : 2);
     debug((isAttack ? 'Attack' : 'Defence') + ': ' + spellName + (!spell || isAttack ? '' : ' / ' + spell.shield.name) + ' (' + Math.round(delay / 10) / 100 + ')');
-    if (!isAttack && spell && videoType && videoActor) {
-        playVideo(spellName, delay);
+    if (!isAttack && spell && videoType && videoActor && playVideo(spell)) {
+        setActiveBlock(videoBlock);
     } else {
         var block = (isAttack ? attackBlock : defenceBlock);
         block.firstChild.innerHTML = spellName;
         setActiveBlock(block);
     }
     if (!isAttack && spell && audioType && audioActor && volume >= 0.1) {
-        playAudio(spellName);
+        playAudio(spell);
     }
     timeout = setTimeout('hideSpell()', delay);
 }
@@ -519,11 +499,14 @@ function castSpell() {
 function hideSpell() {
     setActiveBlock(flashBlock);
     timeout = setTimeout('castSpell()', 100);
+    if (videoBlock.firstChild) {
+        videoBlock.firstChild.pause();
+    }
 }
 
 function setColors() {
     function doSetColors(style, field, display, control, defaultValue) {
-        try { // Throws exception on IE if color value is incorrect
+        try { // throws exception on IE if color value is incorrect
             style[field] = display.style.backgroundColor = control.value;
         } catch(err) {
             style[field] = display.style.backgroundColor = defaultValue;
@@ -691,14 +674,14 @@ function loadConfig(useCookie) {
         var items = [];
         var lookFor = COOKIE_NAME + '=';
         var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
+        for (var i in cookies) {
             var cookie = cookies[i].split(' ').join('');
             if (cookie.indexOf(lookFor) === 0) {
                 items = unescape(cookie.substring(lookFor.length)).split(';');
                 break;
             }
         }
-        for (var i = 0; i < items.length; i++) {
+        for (var i in items) {
             var item = items[i].split('=');
             if (item.length === 2) {
                 fromCookie[unescape(item[0].split(' ').join(''))] = unescape(item[1].split(' ').join(''));
@@ -717,6 +700,10 @@ function loadConfig(useCookie) {
     adjustSpeed(); // calls saveConfig()
     setVolume();
     adjustVolume(); // calls saveConfig()
+}
+
+function createMediaName(actor, spell, extension) {
+    return actor.toLowerCase() + '/' + spell.split(' ').join('') + '.' + extension;
 }
 
 function Spell(name, control, factorControl, shield, category) {
@@ -749,6 +736,24 @@ function Spell(name, control, factorControl, shield, category) {
     }
     if (this.isAttack) {
         attackSpells.push(this);
+        this.audios = [];
+        this.videos = [];
+        if (this.shield) {
+            for (var i = 0, actor; actor = AUDIO_ACTORS[i++];) {
+                var audio = document.createElement('audio');
+                audio.src = createMediaName(actor, name, audioExtension);
+                audio.onError = '';
+                audio.load();
+                this.audios.push(audio);
+            }
+            for (var i = 0, actor; actor = VIDEO_ACTORS[i++];) {
+                var video = document.createElement('video');
+                video.src = createMediaName(actor, name, videoExtension);
+                video.muted = true;
+                video.load();
+                this.videos.push(video);
+            }
+        }
     }
     if (this.isShield) {
         shieldSpells.push(this);
@@ -782,7 +787,7 @@ function createSpellBlock(table, data, category, on) {
     var minLevel = (factors ? columns.length : 1);
     if (factors && columns.length > 1) {
         var found = false;
-        for (var i = 0; i < factors.length; i++) {
+        for (var i in factors) {
             if (factors[i]) {
                 if (found) {
                     minLevel = i;
@@ -798,7 +803,7 @@ function createSpellBlock(table, data, category, on) {
     var ret = [];
     var cell;
     var factor;
-    for (var i = 0; i < columns.length; i++) {
+    for (var i in columns) {
         var column = columns[i];
         factor = (factors && typeof factors === 'object' ? factors[i] : factors);
         cell = row.insertCell(-1);
@@ -870,13 +875,16 @@ function main() {
     attackStyle = getStyle('#attackBlockID');
     defenceStyle = getStyle('#defenceBlockID');
     body = document.getElementsByTagName('body')[0];
+    body.removeAttribute('onload'); // Don't even try to work after saving modified page
     loadingBlock = document.getElementById('loadingBlockID');
+    loadingPercentage = document.getElementById('loadingPercentageID');
     mainBlock = document.getElementById('mainBlockID');
     selectionBlock = document.getElementById('selectionBlockID');
     centerBlock = document.getElementById('centerBlockID');
     welcomeBlock = document.getElementById('welcomeBlockID');
     flashBlock = document.getElementById('flashBlockID');
-    readyBlock = document.getElementById('readyBlockID'); readyBlock.firstChild.innerHTML = GET_READY;
+    readyBlock = document.getElementById('readyBlockID');
+    readyBlock.firstChild.innerHTML = GET_READY;
     attackBlock = document.getElementById('attackBlockID');
     defenceBlock = document.getElementById('defenceBlockID');
     videoBlock = document.getElementById('videoBlockID');
@@ -903,11 +911,6 @@ function main() {
     toggleSelectionBlock();
     attackGenerator = new SpellGenerator();
     defenceGenerator = new SpellGenerator();
-    if (window.opera) {
-        getStyle('button.menu')['padding-top'] = '11px';
-        selectionButton.style.lineHeight = 1.3;
-        selectionButton.style.paddingTop = '5px';
-    }
     // Create config
     config = {};
     configureParameter('videoActor', RANDOM);
@@ -923,13 +926,56 @@ function main() {
     configureParameter('fontFamily', DEFAULT_FONT_NAME.slice(0, DEFAULT_FONT_NAME.indexOf(',')));
     configureParameter('fontBold', true);
     configureParameter('fontItalic', false);
+    // Setting up audio and video
+    audioType = audioExtension = null;
+    var audio = document.createElement('audio');
+    for (var type in AUDIO_TYPES) {
+        if (audio.canPlayType(type)) {
+            audioType = type;
+            audioExtension = AUDIO_TYPES[type];
+            break;
+        }
+    }
+    if (audioType) {
+        appendSelectOption(audioActorControl, RANDOM);
+        for (var i = 0, actor; actor = AUDIO_ACTORS[i++];) {
+          appendSelectOption(audioActorControl, actor);
+        }
+        supportedAudio.innerHTML = audioExtension.toUpperCase();
+    } else {
+        AUDIO_ACTORS = [];
+        audioActorControl.disabled = true;
+        volumeFill.style.width = 0;
+        volumeControl.disabled = true;
+    }
+    videoType = videoExtension = null;
+    if (!window.orientation) { // detect desktop/mobile browsers
+        var video = document.createElement('video');
+        for (var type in VIDEO_TYPES) {
+            if (video.canPlayType(type)) {
+                videoType = type;
+                videoExtension = VIDEO_TYPES[type];
+                break;
+            }
+        }
+    }
+    if (videoType) {
+        appendSelectOption(videoActorControl, RANDOM);
+        for (var i = 0, actor; actor = VIDEO_ACTORS[i++];) {
+          appendSelectOption(videoActorControl, actor);
+        }
+        supportedVideo.innerHTML = videoExtension.toUpperCase();
+    } else {
+        VIDEO_ACTORS = [];
+        videoActorControl.disabled = true;
+    }
     // Configure spell selector
     spellsNeedingShields = [];
     spellSelector.deleteCell(0);
     for (var i = 0, column; column = SPELLS[i++];) {
         var cell = spellSelector.insertCell(-1);
         cell.className = 'column';
-        cell.innerHTML = '<table><\/table>';
+        cell.innerHTML = '<table></table>';
         var columnBlock = spellSelector.lastChild.firstChild;
         for (var j = 0, section; section = column[j++];) {
             createSpellSection(columnBlock, section, null, (i > 1) ? null : [true, false]);
@@ -949,45 +995,54 @@ function main() {
     }
     delete allSpells;
     delete spellsNeedingShields;
-    // Setting up audio and video
-    audioType = audioExtension = null;
-    var audio = document.createElement('audio');
-    for (var i = 0, t; t = AUDIO_TYPES[i++];) {
-        if (audio.canPlayType(t[0])) {
-            audioType = t[0];
-            audioExtension = t[1];
-            break;
+    // Wait for audio and video to load
+    waitForMedia();
+}
+
+function waitForMedia() {
+    var ready = true;
+    var loadedMedia = 0;
+    var totalMedia = 0;
+    for (var i = 0, spell; spell = attackSpells[i++];) {
+        for (var j in spell.audios) {
+            totalMedia++;
+            var audio = spell.audios[j];
+            if (audio && audio.readyState < (window.opera ? audio.HAVE_CURRENT_DATA : audio.HAVE_ENOUGH_DATA)) {
+                ready = false;
+                if (audio.error) {
+                    debug('ERROR loading audio from ' + audio.src);
+                    spell.audios[j] = null;
+                }
+             } else {
+                loadedMedia++;
+            }
+        }
+        for (var j in spell.videos) {
+            totalMedia++;
+            var video = spell.videos[j];
+            if (video && video.readyState < (window.opera ? video.HAVE_CURRENT_DATA : video.HAVE_ENOUGH_DATA)) {
+                ready = false;
+                if (video.error) {
+                    debug('ERROR loading video from ' + video.src);
+                    spell.videos[j] = null;
+                }
+            } else {
+                loadedMedia++;
+            }
         }
     }
-    if (audioType) {
-        appendSelectOption(audioActorControl, RANDOM);
-        for (var i = 0, actor; actor = AUDIO_ACTORS[i++];) {
-          appendSelectOption(audioActorControl, actor);
-        }
-        supportedAudio.innerHTML = audioExtension.toUpperCase();
+    if (totalMedia) {
+        loadingPercentage.innerHTML = Math.round(loadedMedia * 100 / totalMedia) + '%';
+    }
+    if (ready) {
+        // Complete the application startup
+        mainComplete();
     } else {
-        audioActorControl.disabled = true;
-        volumeFill.style.width = 0;
-        volumeControl.disabled = true;
+        setTimeout(waitForMedia, DT);
     }
-    videoType = videoExtension = null;
-    var video = document.createElement('video');
-    for (var i = 0, t; t = VIDEO_TYPES[i++];) {
-        if (video.canPlayType(t[0])) {
-            videoType = t[0];
-            videoExtension = t[1];
-            break;
-        }
-    }
-    if (videoType) {
-        appendSelectOption(videoActorControl, RANDOM);
-        for (var i = 0, actor; actor = VIDEO_ACTORS[i++];) {
-          appendSelectOption(videoActorControl, actor);
-        }
-        supportedVideo.innerHTML = videoExtension.toUpperCase();
-    } else {
-        videoActorControl.disabled = true;
-    }
+}
+
+function mainComplete() {
     // Show main page
     loadingBlockID.className = 'invisible';
     mainBlock.className = 'visible';
@@ -996,7 +1051,6 @@ function main() {
     speedScroll.onscroll = adjustSpeed;
     volumeScroll.style.height = volumeScroll.offsetHeight - volumeScroll.clientHeight + 'px';
     volumeScroll.onscroll = adjustVolume;
-    body.removeAttribute('onload'); // Don't even try to work after saving modified page
 }
 </script>
 </head>
@@ -1004,12 +1058,12 @@ function main() {
   <table id="loadingBlockID" class="visible">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.23</h1>
+        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.24</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
         <br>
-        <script type="text/javascript">document.write('<p class="bold">...loading, please wait...<\/p>')</script>
+        <script type="text/javascript">document.write('<p class="bold">Loading... <span id="loadingPercentageID"></span></p>')</script>
         <noscript>
           <p class="bold">This page requires <a href="http://mozilla.org/js/">JavaScript</a> to operate.</p>
           <p class="bold">Please enable JavaScript in your browser and reload the page.</p>
@@ -1025,7 +1079,7 @@ function main() {
         <table id="headerTable">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer/DH2013<br>v1.23</td>
+            <td id="headerTitle">SpellTrainer/DH2013<br>v1.24</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
@@ -1076,7 +1130,7 @@ function main() {
         <table id="centerTable">
           <tr>
             <td id="welcomeBlockID" class="visible">
-              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.23</h1>
+              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.24</h1>
               <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
               <p><img class="logo" src="wand.png" alt=""></p>
               <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
@@ -1090,7 +1144,7 @@ function main() {
             <td id="readyBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
             <td id="attackBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
             <td id="defenceBlockID" class="invisible" onclick="stop()"><span class="cast"></span></td>
-            <td id="videoBlockID" class="invisible" onclick="stop()"><video muted preload autoplay></video></td>
+            <td id="videoBlockID" class="invisible" onclick="stop()"></td>
           </tr>
         </table>
       </td>
