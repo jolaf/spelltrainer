@@ -742,15 +742,15 @@ function Spell(name, control, factorControl, shield, category) {
             for (var i = 0, actor; actor = AUDIO_ACTORS[i++];) {
                 var audio = document.createElement('audio');
                 audio.src = createMediaName(actor, name, audioExtension);
-                audio.onError = '';
-                audio.load();
+                audio.volume = 0;
+                audio.play();
                 this.audios.push(audio);
             }
             for (var i = 0, actor; actor = VIDEO_ACTORS[i++];) {
                 var video = document.createElement('video');
                 video.src = createMediaName(actor, name, videoExtension);
                 video.muted = true;
-                video.load();
+                video.play();
                 this.videos.push(video);
             }
         }
@@ -1007,7 +1007,7 @@ function waitForMedia() {
         for (var j in spell.audios) {
             totalMedia++;
             var audio = spell.audios[j];
-            if (audio && audio.readyState < (window.opera ? audio.HAVE_CURRENT_DATA : audio.HAVE_ENOUGH_DATA)) {
+            if (audio && audio.readyState < audio.HAVE_ENOUGH_DATA) {
                 ready = false;
                 if (audio.error) {
                     debug('ERROR loading audio from ' + audio.src);
@@ -1020,7 +1020,7 @@ function waitForMedia() {
         for (var j in spell.videos) {
             totalMedia++;
             var video = spell.videos[j];
-            if (video && video.readyState < (window.opera ? video.HAVE_CURRENT_DATA : video.HAVE_ENOUGH_DATA)) {
+            if (video && video.readyState < video.HAVE_ENOUGH_DATA) {
                 ready = false;
                 if (video.error) {
                     debug('ERROR loading video from ' + video.src);
@@ -1058,7 +1058,7 @@ function mainComplete() {
   <table id="loadingBlockID" class="visible">
     <tr>
       <td id="infoBlockID">
-        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.24</h1>
+        <h1 id="noscriptTitle">SpellTrainer/DH2013&nbsp;v1.25</h1>
         <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
         <p><img class="logo" src="wand.png" alt=""></p>
         <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
@@ -1079,7 +1079,7 @@ function mainComplete() {
         <table id="headerTable">
           <tr>
             <td id="logoBlockID"><img class="logo" src="wand.png" alt=""></td>
-            <td id="headerTitle">SpellTrainer/DH2013<br>v1.24</td>
+            <td id="headerTitle">SpellTrainer/DH2013<br>v1.25</td>
             <td id="menuPadding" class="menu"><button id="selectionButtonID" class="menu" type="button" onclick="toggleSelectionBlock()"></button></td>
             <td class="menu"><button id="startButtonID" class="menu" type="button" onclick="start()"></button></td>
             <td>
@@ -1130,7 +1130,7 @@ function mainComplete() {
         <table id="centerTable">
           <tr>
             <td id="welcomeBlockID" class="visible">
-              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.24</h1>
+              <h1 id="welcomeTitle">SpellTrainer/DH2013&nbsp;v1.25</h1>
               <p>[<a href="http://jolaf.jnm.ru/spelltrainer/dh2013.html">Latest&nbsp;version</a>] [<a href="http://jolaf.jnm.ru/spelltrainer/spelltrainer.zip">Download</a>] [<a href="http://code.google.com/p/spelltrainer/">Project&nbsp;page</a>] [<a href="mailto:vmzakhar@gmail.com?Subject=SpellTrainer">Contact&nbsp;mail</a>]</p>
               <p><img class="logo" src="wand.png" alt=""></p>
               <p>This software is created to train players in spellcasting for <a href="http://dh2013.livejournal.com/560.html">Deathly&nbsp;Hallows&nbsp;2013&nbsp;LARP</a>.</p>
