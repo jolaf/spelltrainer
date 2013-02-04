@@ -1,3 +1,4 @@
 AddDefaultCharset Off
+AddType video/mp4 mp4
 AddType video/webm webm
 DirectoryIndex spelltrainer.html
