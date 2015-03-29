@@ -1,0 +1,24 @@
+navigator.userAgent.toLowerCase().match(/(ipad)|(iphone)|(ipod)|(android)|(webos)/i)
+navigator.appVersion.toLowerCase().indexOf('mobile') >= 0;
+
+Create 3-second series support
+
+Fix extra vertical scroll in IE, Opera
+
+Fix cookie handling in IE
+
+Fix local copy cookie handling in Chrome
+
+== or ===
+
+Too many saveconfigs?
+
+extra globals?
+
+split HTML, CSS and JavaScript codes, extract common parts
+
+cleanup CSS
+
+reorder methods
+
+remove audioType/videoType
