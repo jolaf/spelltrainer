@@ -4,4 +4,7 @@ The spells are specific physical gestures (similar to fencing movements) and the
 
 This program requests a person to do spells in random sequence in the specified tempo, thus improving a person's skill and reaction.
 
+http://hp-ekb.livejournal.com/1698804.html
+http://dh2013.livejournal.com/13370.html
+
 -- Moved from https://code.google.com/p/spelltrainer
